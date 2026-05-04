@@ -441,6 +441,11 @@ const ADMIN_EMAIL = 'pierson@hollandhomesbuilder.com';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Connectivity test — remove once save is working
+fetch(SUPABASE_URL + '/rest/v1/layouts?select=name&limit=1', {
+  headers: { apikey: SUPABASE_KEY }
+}).then(r => r.json()).then(d => console.log('[db test] response:', d)).catch(e => console.error('[db test] error:', e));
+
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
