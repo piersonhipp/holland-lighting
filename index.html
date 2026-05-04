@@ -577,9 +577,14 @@ async function saveLayout(name) {
     }
   }
 
-  console.log('[save] upserting to supabase');
-  const { error: saveErr } = await sb.from('layouts').upsert({ name, data: payload, pdf_path, updated_at: new Date().toISOString() }, { onConflict: 'name' });
-  console.log('[save] upsert result — error:', saveErr);
+  console.log('[save] saving to supabase');
+  const row = { name, data: payload, pdf_path, updated_at: new Date().toISOString() };
+  let { error: saveErr } = await sb.from('layouts').update({ data: payload, pdf_path, updated_at: row.updated_at }).eq('name', name);
+  console.log('[save] update result:', saveErr);
+  if (saveErr) {
+    ({ error: saveErr } = await sb.from('layouts').insert(row));
+    console.log('[save] insert result:', saveErr);
+  }
   if (saveErr) { alert('Save failed: ' + saveErr.message); return; }
 
   st.layouts[name] = { ...payload, pdf_path };
