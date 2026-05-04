@@ -332,6 +332,33 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .status-msg { font-size: 11px; color: var(--text-muted); padding: 4px; }
   .status-err { font-size: 11px; color: var(--danger); padding: 4px; }
+
+  /* Confirm dialog */
+  #confirmModal {
+    display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.4);
+    backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;
+  }
+  #confirmModal.open { display: flex; }
+  .confirm-box {
+    background: var(--navy-mid); border: 1px solid var(--border); border-radius: 14px;
+    padding: 32px 32px 24px; width: 380px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+  }
+  .confirm-icon { font-size: 28px; margin-bottom: 12px; }
+  .confirm-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .confirm-body { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 24px; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .confirm-cancel {
+    background: var(--navy-dark); color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.12s;
+  }
+  .confirm-cancel:hover { background: var(--border); color: var(--text); }
+  .confirm-ok {
+    background: var(--danger); color: #fff; border: none;
+    border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.12s;
+  }
+  .confirm-ok:hover { background: #dc2626; }
 </style>
 </head>
 <body>
@@ -467,6 +494,19 @@
       <div class="admin-msg" id="inviteMsg"></div>
       <div class="admin-section-title" style="margin-top:16px">Team Members</div>
       <div class="user-list" id="userList"><div class="status-msg">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ────────────────────────────────────────────────────── -->
+<div id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-body" id="confirmBody"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" id="confirmCancel">Cancel</button>
+      <button class="confirm-ok" id="confirmOk">Continue</button>
     </div>
   </div>
 </div>
@@ -638,7 +678,8 @@ async function saveLayout(name) {
 }
 
 async function deleteLayout(name) {
-  if (!confirm(`Delete layout "${name}"?`)) return;
+  const confirmed = await showConfirm(`Delete "${name}"?`, 'This will permanently delete the layout and cannot be undone.', 'Delete');
+  if (!confirmed) return;
   const pdf_path = st.layouts[name]?.pdf_path;
   await sb.from('layouts').delete().eq('name', name);
   if (pdf_path) await sb.storage.from('pdfs').remove([pdf_path]);
@@ -1287,9 +1328,29 @@ document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.targe
 document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all stamps on this page?'))return;st.stamps=st.stamps.filter(s=>s.origPage!==curPage());st.selectedIds.clear();renderStamps();renderLegend(); };
 document.getElementById('exportBtn').onclick=exportPDF;
 
-document.getElementById('newLayoutBtn').onclick = () => {
+function showConfirm(title, body, okLabel) {
+  return new Promise(resolve => {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    document.getElementById('confirmOk').textContent = okLabel || 'Continue';
+    const modal = document.getElementById('confirmModal');
+    modal.classList.add('open');
+    const ok = document.getElementById('confirmOk');
+    const cancel = document.getElementById('confirmCancel');
+    function cleanup(result) { modal.classList.remove('open'); ok.onclick = null; cancel.onclick = null; resolve(result); }
+    ok.onclick = () => cleanup(true);
+    cancel.onclick = () => cleanup(false);
+  });
+}
+
+document.getElementById('newLayoutBtn').onclick = async () => {
   if (st.stamps.length || st.pdfDoc) {
-    if (!confirm('Start a new layout? Unsaved changes will be lost.')) return;
+    const confirmed = await showConfirm(
+      'Start a new layout?',
+      'Any unsaved progress will be lost. Make sure you have saved your current layout before continuing.',
+      'Start New'
+    );
+    if (!confirmed) return;
   }
   st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
