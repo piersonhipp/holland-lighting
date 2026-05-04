@@ -556,14 +556,23 @@ async function saveLayout(name) {
     customStamps: JSON.parse(JSON.stringify(st.customStamps)),
   };
 
-  // Upload PDF if we have one
+  // Upload PDF if we have one (best-effort — layout saves even if upload fails)
   let pdf_path = st.layouts[name]?.pdf_path || null;
   if (st.pdfBuffer) {
-    const safeName = name.replace(/[^a-z0-9_-]/gi, '_');
-    pdf_path = `${safeName}.pdf`;
-    const blob = new Blob([st.pdfBuffer], { type: 'application/pdf' });
-    const { error: uploadErr } = await sb.storage.from('pdfs').upload(pdf_path, blob, { upsert: true });
-    if (uploadErr) { alert('PDF upload failed: ' + uploadErr.message); return; }
+    try {
+      const safeName = name.replace(/[^a-z0-9_-]/gi, '_');
+      const uploadPath = `${safeName}.pdf`;
+      const blob = new Blob([st.pdfBuffer], { type: 'application/pdf' });
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+      const { error: uploadErr } = await Promise.race([
+        sb.storage.from('pdfs').upload(uploadPath, blob, { upsert: true }),
+        timeout,
+      ]);
+      if (!uploadErr) pdf_path = uploadPath;
+      else console.warn('[save] PDF upload failed (layout will still save):', uploadErr.message);
+    } catch (e) {
+      console.warn('[save] PDF upload error (layout will still save):', e.message);
+    }
   }
 
   console.log('[save] upserting to supabase');
