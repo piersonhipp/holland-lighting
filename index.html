@@ -560,10 +560,13 @@ async function saveLayout(name) {
     const safeName = name.replace(/[^a-z0-9_-]/gi, '_');
     pdf_path = `${safeName}.pdf`;
     const blob = new Blob([st.pdfBuffer], { type: 'application/pdf' });
-    await sb.storage.from('pdfs').upload(pdf_path, blob, { upsert: true });
+    const { error: uploadErr } = await sb.storage.from('pdfs').upload(pdf_path, blob, { upsert: true });
+    if (uploadErr) { alert('PDF upload failed: ' + uploadErr.message); return; }
   }
 
-  await sb.from('layouts').upsert({ name, data: payload, pdf_path, updated_at: new Date().toISOString() }, { onConflict: 'name' });
+  const { error: saveErr } = await sb.from('layouts').upsert({ name, data: payload, pdf_path, updated_at: new Date().toISOString() }, { onConflict: 'name' });
+  if (saveErr) { alert('Save failed: ' + saveErr.message); return; }
+
   st.layouts[name] = { ...payload, pdf_path };
   st.currentLayout = name;
   renderLayoutList();
