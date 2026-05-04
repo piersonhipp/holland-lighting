@@ -94,7 +94,7 @@
   /* Sidebar */
   #sidebar {
     width: 228px; flex-shrink: 0; background: var(--navy-mid); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; overflow-y: auto; padding: 10px 12px;
+    display: flex; flex-direction: column; overflow: hidden; padding: 10px 12px;
   }
   .section-label {
     font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.12em;
@@ -119,10 +119,11 @@
   }
   .place-btn:hover { background: #dcfce7; color: var(--green); border-color: var(--green); }
   .place-btn.active { background: var(--green); color: #fff; border-color: var(--green); box-shadow: 0 0 0 2px #10b98133; }
-  #sidebarSpacer { flex: 1; min-height: 12px; }
-  #customSection { position: relative; }
-  #layoutMgr { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
-  #layoutList { max-height: 130px; overflow-y: auto; margin-bottom: 6px; }
+  #sidebarTop { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+  #sidebarSpacer { min-height: 8px; }
+  #customSection { position: relative; flex-shrink: 0; }
+  #layoutMgr { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  #layoutList { flex: 1; overflow-y: auto; margin-bottom: 6px; min-height: 0; }
   .layout-item {
     display: flex; align-items: center; gap: 6px; padding: 5px 7px;
     border-radius: 5px; cursor: pointer; color: #64748b; font-size: 12px;
@@ -369,6 +370,7 @@
   </div>
   <div id="appBody">
     <div id="sidebar">
+      <div id="sidebarTop">
       <div class="section-label">Fixtures</div>
       <div id="fixtureList"></div>
       <div id="sidebarSpacer"></div>
@@ -389,6 +391,7 @@
             <button class="dlg-btn primary" id="csAddBtn">Add</button>
           </div>
         </div>
+      </div>
       </div>
       <div id="layoutMgr">
         <div class="section-label">Saved Layouts</div>
