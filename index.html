@@ -524,10 +524,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('app').classList.add('visible');
     document.getElementById('userPill').textContent = session.user.email;
     if (st.isAdmin) document.getElementById('adminBtn').style.display = '';
-    await loadLayouts();
-    renderLayoutList();
     renderFixtureList();
     renderCustomList();
+    try { await loadLayouts(); } catch (e) { console.error('loadLayouts failed', e); }
+    renderLayoutList();
   } else {
     st.user = null;
     document.getElementById('authScreen').style.display = '';
