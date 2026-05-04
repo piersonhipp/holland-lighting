@@ -196,6 +196,15 @@
     display: flex; align-items: flex-start; justify-content: center; padding: 20px;
   }
   #canvasContainer { position: relative; display: inline-block; }
+  #dropOverlay {
+    display: none; position: absolute; inset: 0; z-index: 50;
+    background: rgba(37,99,235,0.08); border: 3px dashed var(--blue);
+    border-radius: 12px; margin: 16px;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; color: var(--blue); font-size: 16px; font-weight: 600;
+    pointer-events: none;
+  }
+  #canvasWrap.drag-over #dropOverlay { display: flex; }
   #pdfCanvas { display: block; cursor: default; }
   #stampLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
   #guideLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
@@ -427,6 +436,14 @@
             <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
           </svg>
           <div>Upload a PDF floor plan to begin</div>
+          <div style="font-size:12px;color:#cbd5e1">or drag and drop a PDF anywhere</div>
+        </div>
+        <div id="dropOverlay">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          <div>Drop PDF to open</div>
         </div>
       </div>
     </div>
@@ -1270,6 +1287,23 @@ document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all sta
 document.getElementById('exportBtn').onclick=exportPDF;
 document.getElementById('saveLayoutBtn').onclick=async()=>{ const n=document.getElementById('layoutName').value.trim();await saveLayout(n||'Layout '+(Object.keys(st.layouts).length+1));document.getElementById('layoutName').value=''; };
 document.addEventListener('click', () => { document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open')); });
+
+// Drag and drop PDF
+const canvasWrap = document.getElementById('canvasWrap');
+let dragCounter = 0;
+canvasWrap.addEventListener('dragenter', e => { e.preventDefault(); dragCounter++; canvasWrap.classList.add('drag-over'); });
+canvasWrap.addEventListener('dragleave', e => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; canvasWrap.classList.remove('drag-over'); } });
+canvasWrap.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+canvasWrap.addEventListener('drop', async e => {
+  e.preventDefault(); dragCounter = 0; canvasWrap.classList.remove('drag-over');
+  const file = Array.from(e.dataTransfer.files).find(f => f.type === 'application/pdf');
+  if (!file) return alert('Please drop a PDF file.');
+  await handleFileUpload(file);
+  const kept = await showPagePicker(st.pdfDoc);
+  if (!kept || !kept.length) return;
+  st.keptPages = kept; st.pageIdx = 0;
+  ensureCanvas(); renderPdfPage();
+});
 </script>
 </body>
 </html>
