@@ -395,7 +395,6 @@
 <div id="app">
   <div id="appHeader">
     <h1>💡 Lighting Layout</h1>
-    <button class="hdr-btn" id="newLayoutBtn">+ New</button>
     <button class="hdr-btn" id="uploadBtn">📄 Upload PDF</button>
     <input type="file" id="fileInput" accept="application/pdf" style="display:none">
     <div class="sep"></div>
@@ -885,12 +884,17 @@ async function handleFileUpload(file) {
 function bindFileInput() {
   document.getElementById('fileInput').onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
+    // Clear existing state before loading new PDF
+    st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
+    st.currentLayout = null; st.customStamps = [];
+    st.mode = 'select'; deactivatePlace();
     await handleFileUpload(file);
     const kept = await showPagePicker(st.pdfDoc);
     e.target.value = '';
     if (!kept || !kept.length) return;
     st.keptPages = kept; st.pageIdx = 0;
     ensureCanvas(); renderPdfPage();
+    renderFixtureList(); renderCustomList(); renderLayoutList();
   };
 }
 
@@ -1295,7 +1299,17 @@ document.getElementById('csAddBtn').onclick=()=>{
 // ══════════════════════════════════════════════════════════════════════════
 // UI EVENTS
 // ══════════════════════════════════════════════════════════════════════════
-document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
+document.getElementById('uploadBtn').onclick = async () => {
+  if (st.stamps.length || st.pdfDoc) {
+    const confirmed = await showConfirm(
+      'Upload a new PDF?',
+      'This will clear your current layout. Any unsaved progress will be lost.',
+      'Upload New'
+    );
+    if (!confirmed) return;
+  }
+  document.getElementById('fileInput').click();
+};
 bindFileInput();
 
 document.getElementById('prevPage').onclick=async()=>{ if(st.pageIdx>0){st.pageIdx--;await renderPdfPage();} };
@@ -1343,29 +1357,6 @@ function showConfirm(title, body, okLabel) {
   });
 }
 
-document.getElementById('newLayoutBtn').onclick = async () => {
-  if (st.stamps.length || st.pdfDoc) {
-    const confirmed = await showConfirm(
-      'Start a new layout?',
-      'Any unsaved progress will be lost. Make sure you have saved your current layout before continuing.',
-      'Start New'
-    );
-    if (!confirmed) return;
-  }
-  st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
-  st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
-  st.currentLayout = null; st.stampSize = 24; st.customStamps = [];
-  st.mode = 'select'; deactivatePlace();
-  document.getElementById('stampSizeInput').value = 24;
-  document.getElementById('layoutName').value = '';
-  applyZoom(1);
-  const wrap = document.getElementById('canvasWrap');
-  wrap.innerHTML = `<div id="dropOverlay"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg><div>Drop PDF to open</div></div><div id="emptyState"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg><div>Upload a PDF floor plan to begin</div><div style="font-size:12px;color:#cbd5e1">or drag and drop a PDF anywhere</div></div>`;
-  document.getElementById('pageInfo').textContent = 'No PDF loaded';
-  document.getElementById('prevPage').disabled = true;
-  document.getElementById('nextPage').disabled = true;
-  renderFixtureList(); renderCustomList(); renderLayoutList();
-};
 document.getElementById('saveLayoutBtn').onclick=async()=>{ const n=document.getElementById('layoutName').value.trim();await saveLayout(n||'Layout '+(Object.keys(st.layouts).length+1));document.getElementById('layoutName').value=''; };
 document.addEventListener('click', () => { document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open')); });
 
