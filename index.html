@@ -519,9 +519,12 @@ document.getElementById('regBtn').onclick = async () => {
   else err.style.color = '#22c55e', err.textContent = 'Account created! You can now sign in.';
 };
 
-document.getElementById('signOutBtn').onclick = () => sb.auth.signOut();
+document.getElementById('signOutBtn').onclick = () => {
+  // Defer signOut so it runs outside any auth lock
+  setTimeout(() => sb.auth.signOut(), 0);
+};
 
-sb.auth.onAuthStateChange(async (event, session) => {
+sb.auth.onAuthStateChange((event, session) => {
   if (session?.user) {
     st.user = session.user;
     st.isAdmin = session.user.email === ADMIN_EMAIL;
@@ -531,8 +534,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (st.isAdmin) document.getElementById('adminBtn').style.display = '';
     renderFixtureList();
     renderCustomList();
-    try { await loadLayouts(); } catch (e) { console.error('loadLayouts failed', e); }
-    renderLayoutList();
+    // Defer Supabase calls outside the auth lock
+    setTimeout(async () => {
+      try { await loadLayouts(); } catch (e) { console.error('loadLayouts failed', e); }
+      renderLayoutList();
+    }, 0);
   } else {
     st.user = null;
     document.getElementById('authScreen').style.display = '';
