@@ -441,10 +441,6 @@ const ADMIN_EMAIL = 'pierson@hollandhomesbuilder.com';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Connectivity test — remove once save is working
-fetch(SUPABASE_URL + '/rest/v1/layouts?select=name&limit=1', {
-  headers: { apikey: SUPABASE_KEY }
-}).then(r => r.json()).then(d => console.log('[db test] response:', d)).catch(e => console.error('[db test] error:', e));
 
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -556,11 +552,8 @@ async function loadLayouts() {
 }
 
 async function saveLayout(name) {
-  console.log('[save] called with name:', name);
   if (!name.trim()) return alert('Enter a layout name.');
-  console.log('[save] building payload v4');
   try {
-  console.log('[save] inside try');
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
     pdfName: st.pdfName,
@@ -588,22 +581,17 @@ async function saveLayout(name) {
     }
   }
 
-  console.log('[save] saving to supabase');
   const row = { name, data: payload, pdf_path, updated_at: new Date().toISOString() };
   let { error: saveErr } = await sb.from('layouts').update({ data: payload, pdf_path, updated_at: row.updated_at }).eq('name', name);
-  console.log('[save] update result:', saveErr);
   if (saveErr) {
     ({ error: saveErr } = await sb.from('layouts').insert(row));
-    console.log('[save] insert result:', saveErr);
   }
   if (saveErr) { alert('Save failed: ' + saveErr.message); return; }
 
   st.layouts[name] = { ...payload, pdf_path };
   st.currentLayout = name;
   renderLayoutList();
-  console.log('[save] done');
   } catch (e) {
-    console.error('[save] unexpected error:', e);
     alert('Save error: ' + e.message);
   }
 }
