@@ -23,7 +23,6 @@
     --danger: #ef4444;
     --success: #22c55e;
   }
-   
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--navy-dark); color: var(--text); overflow: hidden; }
 
@@ -527,6 +526,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (st.isAdmin) document.getElementById('adminBtn').style.display = '';
     await loadLayouts();
     renderLayoutList();
+    renderFixtureList();
+    renderCustomList();
   } else {
     st.user = null;
     document.getElementById('authScreen').style.display = '';
