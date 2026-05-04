@@ -466,7 +466,7 @@ const CUSTOM_COLORS = ['#EF4444','#F97316','#EAB308','#22C55E','#06B6D4','#3B82F
 
 let st = {
   user: null, isAdmin: false,
-  pdfDoc: null, pdfBuffer: null, pdfName: '',
+  pdfDoc: null, pdfBuffer: null, pdfName: '', pdfPath: null,
   keptPages: [], pageIdx: 0, scale: 1, stampSize: 24,
   stamps: [], selectedIds: new Set(),
   mode: 'select', activeFixture: FIXTURES[0].id,
@@ -630,7 +630,8 @@ async function openLayout(name) {
     renderLegend();
   }
 
-  if (st.pdfDoc) { apply(); renderPdfPage(); return; }
+  // If same PDF is already loaded, just apply stamps
+  if (st.pdfDoc && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); return; }
 
   // Try loading PDF from Supabase storage
   if (layout.pdf_path) {
@@ -639,6 +640,7 @@ async function openLayout(name) {
       const buf = await data.arrayBuffer();
       st.pdfBuffer = buf.slice(0);
       st.pdfName = layout.pdfName || name;
+      st.pdfPath = layout.pdf_path;
       st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
       apply();
       ensureCanvas();
@@ -782,6 +784,7 @@ function deactivatePlace() {
 // ══════════════════════════════════════════════════════════════════════════
 async function handleFileUpload(file) {
   st.pdfName = file.name.replace(/\.pdf$/i,'');
+  st.pdfPath = null;
   const buf = await file.arrayBuffer();
   st.pdfBuffer = buf.slice(0);
   st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
