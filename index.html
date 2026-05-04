@@ -545,7 +545,9 @@ async function loadLayouts() {
 }
 
 async function saveLayout(name) {
+  console.log('[save] called with name:', name);
   if (!name.trim()) return alert('Enter a layout name.');
+  console.log('[save] building payload');
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
     pdfName: st.pdfName,
@@ -564,12 +566,15 @@ async function saveLayout(name) {
     if (uploadErr) { alert('PDF upload failed: ' + uploadErr.message); return; }
   }
 
+  console.log('[save] upserting to supabase');
   const { error: saveErr } = await sb.from('layouts').upsert({ name, data: payload, pdf_path, updated_at: new Date().toISOString() }, { onConflict: 'name' });
+  console.log('[save] upsert result — error:', saveErr);
   if (saveErr) { alert('Save failed: ' + saveErr.message); return; }
 
   st.layouts[name] = { ...payload, pdf_path };
   st.currentLayout = name;
   renderLayoutList();
+  console.log('[save] done');
 }
 
 async function deleteLayout(name) {
