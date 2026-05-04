@@ -548,6 +548,7 @@ async function saveLayout(name) {
   console.log('[save] called with name:', name);
   if (!name.trim()) return alert('Enter a layout name.');
   console.log('[save] building payload');
+  try {
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
     pdfName: st.pdfName,
@@ -584,6 +585,10 @@ async function saveLayout(name) {
   st.currentLayout = name;
   renderLayoutList();
   console.log('[save] done');
+  } catch (e) {
+    console.error('[save] unexpected error:', e);
+    alert('Save error: ' + e.message);
+  }
 }
 
 async function deleteLayout(name) {
