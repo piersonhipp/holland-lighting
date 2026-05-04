@@ -582,10 +582,10 @@ async function saveLayout(name) {
   }
 
   const row = { name, data: payload, pdf_path, updated_at: new Date().toISOString() };
-  let { error: saveErr } = await sb.from('layouts').update({ data: payload, pdf_path, updated_at: row.updated_at }).eq('name', name);
-  if (saveErr) {
-    ({ error: saveErr } = await sb.from('layouts').insert(row));
-  }
+  const isNew = !st.layouts[name];
+  let { error: saveErr } = isNew
+    ? await sb.from('layouts').insert(row)
+    : await sb.from('layouts').update({ data: payload, pdf_path, updated_at: row.updated_at }).eq('name', name);
   if (saveErr) { alert('Save failed: ' + saveErr.message); return; }
 
   st.layouts[name] = { ...payload, pdf_path };
