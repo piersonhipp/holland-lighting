@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Holland Homes — Lighting Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #001F35;
+    --navy-dark: #001020;
+    --navy-mid: #001529;
+    --border: #0e3358;
+    --border-light: #1e3a55;
+    --blue: #2563eb;
+    --blue-hover: #1d4ed8;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #475569;
+    --danger: #ef4444;
+    --success: #22c55e;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--navy-dark); color: var(--text); overflow: hidden; }
+
+  /* ── AUTH SCREEN ─────────────────────────────────────────────────────── */
+  #authScreen {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--navy-dark);
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(37,99,235,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(37,99,235,0.05) 0%, transparent 50%);
+  }
+  .auth-box {
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 16px; padding: 48px 40px; width: 380px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+  .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+  .auth-logo-icon { font-size: 24px; }
+  .auth-logo-text { font-size: 13px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; }
+  .auth-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .auth-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+  .auth-field { margin-bottom: 14px; }
+  .auth-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .auth-field input {
+    width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.15s;
+  }
+  .auth-field input:focus { border-color: var(--blue); }
+  .auth-btn {
+    width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 8px;
+    padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px;
+    font-family: 'DM Sans', sans-serif; transition: background 0.15s;
+  }
+  .auth-btn:hover { background: var(--blue-hover); }
+  .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .auth-error { font-size: 12px; color: var(--danger); margin-top: 10px; min-height: 16px; }
+  .auth-switch { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 20px; }
+  .auth-switch a { color: var(--blue); cursor: pointer; text-decoration: none; }
+  .auth-switch a:hover { text-decoration: underline; }
+
+  /* ── MAIN APP ─────────────────────────────────────────────────────────── */
+  #app { display: none; height: 100vh; flex-direction: column; }
+  #app.visible { display: flex; }
+
+  /* Header */
+  #appHeader {
+    background: var(--navy-mid); border-bottom: 1px solid var(--border);
+    padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  #appHeader h1 { font-size: 14px; font-weight: 700; flex: 1; color: var(--text); letter-spacing: -0.01em; }
+  .hdr-btn {
+    background: #0e2a45; color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap; font-family: 'DM Sans', sans-serif;
+  }
+  .hdr-btn:hover { background: #1a4068; color: #fff; border-color: var(--blue); }
+  .hdr-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .hdr-btn.primary:hover { background: var(--blue-hover); }
+  .hdr-btn.danger { background: transparent; color: #f87171; border-color: #7f1d1d66; }
+  .hdr-btn.danger:hover { background: #7f1d1d; color: #fca5a5; }
+  .user-pill { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; }
+  .sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+  /* Body */
+  #appBody { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 228px; flex-shrink: 0; background: var(--navy-mid); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto; padding: 10px 12px;
+  }
+  .section-label {
+    font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.12em;
+    text-transform: uppercase; margin: 12px 0 5px; padding-left: 2px;
+  }
+  .fixture-row {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+    border-radius: 6px; margin-bottom: 2px; border: 1px solid transparent;
+    transition: all 0.12s; color: var(--text-dim); font-size: 13px;
+  }
+  .fixture-row:hover { background: #0a2540; border-color: var(--border-light); }
+  .fixture-row.placing { background: #0a2540; border-color: var(--blue); color: var(--text); }
+  .swatch { width: 20px; height: 20px; flex-shrink: 0; }
+  .fx-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fx-count { font-size: 12px; font-weight: 600; color: var(--text); min-width: 20px; text-align: right; flex-shrink: 0; }
+  .fx-count.zero { color: #334155; }
+  .place-btn {
+    background: #0e2a45; color: #64748b; border: 1px solid var(--border-light);
+    border-radius: 4px; width: 22px; height: 22px; flex-shrink: 0;
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s; margin-left: 4px;
+  }
+  .place-btn:hover { background: #1a4068; color: #fff; border-color: var(--blue); }
+  .place-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 0 0 2px #2563eb44; }
+  #sidebarSpacer { flex: 1; min-height: 12px; }
+  #customSection { position: relative; }
+  #layoutMgr { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+  #layoutList { max-height: 130px; overflow-y: auto; margin-bottom: 6px; }
+  .layout-item {
+    display: flex; align-items: center; gap: 6px; padding: 5px 7px;
+    border-radius: 5px; cursor: pointer; color: #64748b; font-size: 12px;
+    border: 1px solid transparent; margin-bottom: 2px; transition: all 0.12s;
+  }
+  .layout-item:hover { background: #0a2540; border-color: var(--border-light); color: var(--text-dim); }
+  .layout-item.active { background: #0a2540; border-color: var(--blue); color: #93c5fd; }
+  .layout-del { margin-left: auto; color: #334155; font-size: 15px; cursor: pointer; flex-shrink: 0; }
+  .layout-del:hover { color: var(--danger); }
+  .layout-input {
+    flex: 1; background: #0e2a45; color: var(--text); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 8px; font-size: 12px; outline: none; font-family: 'DM Sans', sans-serif;
+  }
+  .save-btn {
+    background: #0e2a45; color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.12s; font-family: 'DM Sans', sans-serif;
+  }
+  .save-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .sidebar-btn {
+    width: 100%; background: #0e2a45; color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.12s; font-family: 'DM Sans', sans-serif; margin-top: 4px; text-align: center;
+  }
+  .sidebar-btn:hover { background: #1a4068; color: #fff; border-color: var(--blue); }
+
+  /* Main canvas area */
+  #mainArea { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #toolbar {
+    background: var(--navy-mid); border-bottom: 1px solid var(--border);
+    padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+  }
+  #pageInfo { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-family: 'DM Mono', monospace; }
+  .tool-btn {
+    background: #0e2a45; color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.12s; font-family: 'DM Sans', sans-serif;
+  }
+  .tool-btn:hover { background: #1a4068; color: #fff; border-color: var(--blue); }
+  .tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .tool-select {
+    background: #0e2a45; color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .tool-label { font-size: 11px; color: var(--text-muted); }
+  .tool-number {
+    width: 48px; background: #0e2a45; color: var(--text-dim); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 6px; font-size: 12px; text-align: center; outline: none; font-family: 'DM Mono', monospace;
+  }
+  #canvasWrap {
+    flex: 1; overflow: auto; background: #00111f;
+    display: flex; align-items: flex-start; justify-content: center; padding: 20px;
+  }
+  #canvasContainer { position: relative; display: inline-block; }
+  #pdfCanvas { display: block; cursor: default; }
+  #stampLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  #guideLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+  .stamp { position: absolute; pointer-events: all; transform: translate(-50%, -50%); cursor: pointer; user-select: none; }
+  .stamp.selected svg { filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 3px #fff); }
+  #emptyState {
+    color: #0e3358; font-size: 14px; text-align: center; margin: auto;
+    display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px;
+  }
+
+  /* Page picker */
+  .picker-overlay {
+    position: fixed; inset: 0; background: rgba(0,15,30,0.88); backdrop-filter: blur(6px);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+  }
+  .picker-box {
+    background: var(--navy-mid); border: 1px solid var(--border); border-radius: 12px;
+    width: 90vw; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  }
+  .picker-header {
+    background: var(--navy-dark); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  .picker-header h2 { color: var(--text); font-size: 14px; font-weight: 700; flex: 1; }
+  .picker-grid {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px;
+    background: #00111f;
+  }
+  .thumb-card {
+    border: 2px solid var(--border); border-radius: 8px; overflow: hidden;
+    cursor: pointer; transition: all 0.15s; background: var(--navy-mid); user-select: none;
+  }
+  .thumb-card:hover { border-color: #2563eb88; }
+  .thumb-card.checked { border-color: var(--blue); box-shadow: 0 0 0 2px #2563eb33; }
+  .thumb-preview { width: 100%; aspect-ratio: 0.77; background: #0a2540; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .thumb-preview canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .thumb-loading { font-size: 11px; color: #334155; }
+  .thumb-footer { padding: 7px 9px; display: flex; align-items: center; gap: 7px; border-top: 1px solid var(--border); }
+  .thumb-label { font-size: 12px; color: #64748b; flex: 1; }
+  .thumb-check { width: 17px; height: 17px; border-radius: 4px; border: 2px solid var(--border); background: transparent; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .thumb-card.checked .thumb-check { background: var(--blue); border-color: var(--blue); }
+  .check-icon { display: none; }
+  .thumb-card.checked .check-icon { display: block; }
+  .picker-footer {
+    background: var(--navy-dark); border-top: 1px solid var(--border);
+    padding: 12px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .picker-count { font-size: 13px; color: #64748b; flex: 1; }
+  .picker-count strong { color: var(--text); }
+
+  /* Custom stamp dialog */
+  #customDialog {
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 0; right: 0;
+    background: var(--navy-dark); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  #customDialog.open { display: block; }
+  .dlg-label { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .dlg-input {
+    width: 100%; background: #0e2a45; color: var(--text); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 8px; font-size: 12px; outline: none; margin-bottom: 6px; font-family: 'DM Sans', sans-serif;
+  }
+  .dlg-select {
+    width: 100%; background: #0e2a45; color: var(--text); border: 1px solid var(--border-light);
+    border-radius: 5px; padding: 5px 8px; font-size: 12px; outline: none; margin-bottom: 8px; font-family: 'DM Sans', sans-serif;
+  }
+  .color-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .color-swatch { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
+  .color-swatch.sel { border-color: #fff; }
+  .color-picker { width: 100%; height: 26px; border: 1px solid var(--border-light); border-radius: 5px; background: #0e2a45; cursor: pointer; margin-bottom: 8px; }
+  .dlg-row { display: flex; gap: 6px; }
+  .dlg-btn {
+    flex: 1; padding: 6px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; border: 1px solid var(--border-light); background: #0e2a45; color: var(--text-dim); transition: all 0.12s;
+  }
+  .dlg-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .dlg-btn:hover { background: #1a4068; color: #fff; border-color: var(--blue); }
+  .dlg-btn.primary:hover { background: var(--blue-hover); }
+
+  /* Admin panel */
+  #adminPanel {
+    display: none; position: fixed; inset: 0; background: rgba(0,15,30,0.88); backdrop-filter: blur(6px);
+    z-index: 500; align-items: center; justify-content: center;
+  }
+  #adminPanel.open { display: flex; }
+  .admin-box {
+    background: var(--navy-mid); border: 1px solid var(--border); border-radius: 12px;
+    width: 480px; max-height: 80vh; display: flex; flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7); overflow: hidden;
+  }
+  .admin-header {
+    background: var(--navy-dark); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .admin-header h2 { color: var(--text); font-size: 14px; font-weight: 700; flex: 1; }
+  .admin-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .admin-section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .admin-invite-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .admin-input {
+    flex: 1; background: #0e2a45; color: var(--text); border: 1px solid var(--border-light);
+    border-radius: 6px; padding: 8px 12px; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif;
+  }
+  .admin-invite-btn {
+    background: var(--blue); color: #fff; border: none; border-radius: 6px;
+    padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s; white-space: nowrap;
+  }
+  .admin-invite-btn:hover { background: var(--blue-hover); }
+  .user-list { display: flex; flex-direction: column; gap: 6px; }
+  .user-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .user-email { font-size: 13px; color: var(--text-dim); flex: 1; }
+  .user-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; }
+  .user-badge.admin { background: #2563eb22; color: #93c5fd; border: 1px solid #2563eb44; }
+  .user-badge.user { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
+  .admin-msg { font-size: 12px; color: var(--success); margin-top: 6px; min-height: 16px; }
+  .admin-err { font-size: 12px; color: var(--danger); margin-top: 6px; min-height: 16px; }
+
+  /* Loading spinner */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-msg { font-size: 11px; color: var(--text-muted); padding: 4px; }
+  .status-err { font-size: 11px; color: var(--danger); padding: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ── AUTH SCREEN ──────────────────────────────────────────────────────── -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">💡</span>
+      <span class="auth-logo-text">Holland Homes</span>
+    </div>
+    <div id="loginView">
+      <div class="auth-title">Sign in</div>
+      <div class="auth-sub">Use your team account to access Lighting Layout</div>
+      <div class="auth-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@hollandhomes.com" autocomplete="email"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="auth-btn" id="loginBtn">Sign in</button>
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-switch">Need access? <a onclick="showRegView()">Set up your account</a></div>
+    </div>
+    <div id="regView" style="display:none">
+      <div class="auth-title">Set up account</div>
+      <div class="auth-sub">Enter the email your admin invited and choose a password</div>
+      <div class="auth-field"><label>Email</label><input type="email" id="regEmail" placeholder="you@hollandhomes.com"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="regPassword" placeholder="Choose a password (8+ chars)"></div>
+      <button class="auth-btn" id="regBtn">Create account</button>
+      <div class="auth-error" id="regError"></div>
+      <div class="auth-switch"><a onclick="showLoginView()">← Back to sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ─────────────────────────────────────────────────────────── -->
+<div id="app">
+  <div id="appHeader">
+    <h1>💡 Lighting Layout</h1>
+    <button class="hdr-btn" id="uploadBtn">📄 Upload PDF</button>
+    <input type="file" id="fileInput" accept="application/pdf" style="display:none">
+    <div class="sep"></div>
+    <button class="hdr-btn primary" id="exportBtn">⬇ Export PDF</button>
+    <div class="sep"></div>
+    <button class="hdr-btn" id="adminBtn" style="display:none">⚙ Manage Users</button>
+    <span class="user-pill" id="userPill"></span>
+    <button class="hdr-btn danger" id="signOutBtn">Sign out</button>
+  </div>
+  <div id="appBody">
+    <div id="sidebar">
+      <div class="section-label">Fixtures</div>
+      <div id="fixtureList"></div>
+      <div id="sidebarSpacer"></div>
+      <div id="customSection">
+        <div class="section-label">Custom Stamps</div>
+        <div id="customList"></div>
+        <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
+        <div id="customDialog">
+          <div class="dlg-label">Add Custom Stamp</div>
+          <input class="dlg-input" id="csName" placeholder="Name (e.g. Step Light)" maxlength="20">
+          <input class="dlg-input" id="csLetter" placeholder="Letter (1–2 chars)" maxlength="2">
+          <select class="dlg-select" id="csShape"></select>
+          <div class="dlg-label" style="margin-top:4px">Color</div>
+          <div class="color-row" id="csColorRow"></div>
+          <input type="color" class="color-picker" id="csColorPicker" value="#22C55E">
+          <div class="dlg-row">
+            <button class="dlg-btn" id="csCancelBtn">Cancel</button>
+            <button class="dlg-btn primary" id="csAddBtn">Add</button>
+          </div>
+        </div>
+      </div>
+      <div id="layoutMgr">
+        <div class="section-label">Saved Layouts</div>
+        <div id="layoutList"></div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <input class="layout-input" id="layoutName" placeholder="Layout name…">
+          <button class="save-btn" id="saveLayoutBtn">Save</button>
+        </div>
+      </div>
+    </div>
+    <div id="mainArea">
+      <div id="toolbar">
+        <span id="pageInfo">No PDF loaded</span>
+        <button class="tool-btn" id="prevPage" disabled>‹</button>
+        <button class="tool-btn" id="nextPage" disabled>›</button>
+        <div class="sep"></div>
+        <span class="tool-label">Zoom</span>
+        <select class="tool-select" id="zoomSel">
+          <option value="0.5">50%</option><option value="0.75">75%</option>
+          <option value="1" selected>100%</option><option value="1.25">125%</option>
+          <option value="1.5">150%</option><option value="2">200%</option>
+        </select>
+        <div class="sep"></div>
+        <span class="tool-label">Size</span>
+        <input type="number" class="tool-number" id="stampSizeInput" min="8" max="80" value="24">
+        <div class="sep"></div>
+        <button class="tool-btn" id="clearPageBtn" style="color:#f87171">🗑 Clear Page</button>
+      </div>
+      <div id="canvasWrap">
+        <div id="emptyState">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1e3a5f" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          <div>Upload a PDF floor plan to begin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL ──────────────────────────────────────────────────────── -->
+<div id="adminPanel">
+  <div class="admin-box">
+    <div class="admin-header">
+      <h2>⚙ Manage Users</h2>
+      <button class="tool-btn" id="closeAdminBtn">✕</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-section-title">Invite User by Email</div>
+      <div class="admin-invite-row">
+        <input class="admin-input" id="inviteEmail" placeholder="colleague@hollandhomes.com">
+        <button class="admin-invite-btn" id="inviteBtn">Invite</button>
+      </div>
+      <div class="admin-msg" id="inviteMsg"></div>
+      <div class="admin-section-title" style="margin-top:16px">Team Members</div>
+      <div class="user-list" id="userList"><div class="status-msg">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://nffbiresnyzhxvfdouto.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mZmJpcmVzbnl6aHh2ZmRvdXRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTkxMjIsImV4cCI6MjA5MzQ5NTEyMn0.xeshvY_pQrHPNCKBf0OxuNTKlz4JR_NblIOrcbfIyPA';
+// The very first account created becomes admin. Set your own email here:
+const ADMIN_EMAIL = 'pierson@hollandhomesbuilder.com';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// FIXTURES & STATE
+// ══════════════════════════════════════════════════════════════════════════
+const FIXTURES = [
+  { id:'disc',    label:'Disc',            shape:'circle',      color:'#1E3A8A', letter:'D' },
+  { id:'can',     label:'Can/Recessed',    shape:'circle',      color:'#EC4899', letter:'C' },
+  { id:'pendant', label:'Pendant',         shape:'diamond',     color:'#7DD3FC', letter:'P' },
+  { id:'esconce', label:'Exterior Sconce', shape:'triangle',    color:'#92400E', letter:'E' },
+  { id:'sconce',  label:'Sconce',          shape:'triangle',    color:'#166534', letter:'S' },
+  { id:'fan',     label:'Ceiling Fan',     shape:'plus',        color:'#22C55E', letter:'F' },
+  { id:'vanity',  label:'Vanity',          shape:'circle',      color:'#DC2626', letter:'V' },
+  { id:'under',   label:'Under-Cabinet',   shape:'roundedrect', color:'#06B6D4', letter:'U' },
+];
+const CUSTOM_SHAPES = ['circle','square','diamond','triangle','plus','hexagon','roundedrect'];
+const CUSTOM_COLORS = ['#EF4444','#F97316','#EAB308','#22C55E','#06B6D4','#3B82F6','#8B5CF6','#EC4899','#FFFFFF','#94A3B8'];
+
+let st = {
+  user: null, isAdmin: false,
+  pdfDoc: null, pdfBuffer: null, pdfName: '',
+  keptPages: [], pageIdx: 0, scale: 1, stampSize: 24,
+  stamps: [], selectedIds: new Set(),
+  mode: 'select', activeFixture: FIXTURES[0].id,
+  dragState: null,
+  snaps: [], snapTimer: null,
+  customStamps: [],
+  layouts: {}, currentLayout: null,
+};
+function curPage() { return st.keptPages[st.pageIdx]; }
+function allFixtures() { return [...FIXTURES, ...st.customStamps]; }
+
+// ══════════════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════════════
+function showLoginView() {
+  document.getElementById('loginView').style.display = '';
+  document.getElementById('regView').style.display = 'none';
+}
+function showRegView() {
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('regView').style.display = '';
+}
+
+document.getElementById('loginBtn').onclick = async () => {
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { error } = await sb.auth.signInWithPassword({
+    email: document.getElementById('loginEmail').value.trim(),
+    password: document.getElementById('loginPassword').value,
+  });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) err.textContent = error.message;
+};
+
+document.getElementById('regBtn').onclick = async () => {
+  const btn = document.getElementById('regBtn');
+  const err = document.getElementById('regError');
+  err.textContent = '';
+  const email = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPassword').value;
+  if (pw.length < 8) { err.textContent = 'Password must be at least 8 characters'; return; }
+  btn.disabled = true; btn.textContent = 'Creating…';
+  const { error } = await sb.auth.signUp({ email, password: pw });
+  btn.disabled = false; btn.textContent = 'Create account';
+  if (error) err.textContent = error.message;
+  else err.style.color = '#22c55e', err.textContent = 'Account created! You can now sign in.';
+};
+
+document.getElementById('signOutBtn').onclick = () => sb.auth.signOut();
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    st.user = session.user;
+    st.isAdmin = session.user.email === ADMIN_EMAIL;
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('userPill').textContent = session.user.email;
+    if (st.isAdmin) document.getElementById('adminBtn').style.display = '';
+    await loadLayouts();
+    renderLayoutList();
+  } else {
+    st.user = null;
+    document.getElementById('authScreen').style.display = '';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// SUPABASE LAYOUT & PDF STORAGE
+// ══════════════════════════════════════════════════════════════════════════
+async function loadLayouts() {
+  const { data } = await sb.from('layouts').select('name,data,pdf_path,updated_at').order('updated_at', { ascending: false });
+  st.layouts = {};
+  (data || []).forEach(row => { st.layouts[row.name] = { ...row.data, pdf_path: row.pdf_path }; });
+}
+
+async function saveLayout(name) {
+  if (!name.trim()) return alert('Enter a layout name.');
+  const payload = {
+    stamps: JSON.parse(JSON.stringify(st.stamps)),
+    pdfName: st.pdfName,
+    keptPages: [...st.keptPages],
+    stampSize: st.stampSize,
+    customStamps: JSON.parse(JSON.stringify(st.customStamps)),
+  };
+
+  // Upload PDF if we have one
+  let pdf_path = st.layouts[name]?.pdf_path || null;
+  if (st.pdfBuffer) {
+    const safeName = name.replace(/[^a-z0-9_-]/gi, '_');
+    pdf_path = `${safeName}.pdf`;
+    const blob = new Blob([st.pdfBuffer], { type: 'application/pdf' });
+    await sb.storage.from('pdfs').upload(pdf_path, blob, { upsert: true });
+  }
+
+  await sb.from('layouts').upsert({ name, data: payload, pdf_path, updated_at: new Date().toISOString() }, { onConflict: 'name' });
+  st.layouts[name] = { ...payload, pdf_path };
+  st.currentLayout = name;
+  renderLayoutList();
+}
+
+async function deleteLayout(name) {
+  if (!confirm(`Delete layout "${name}"?`)) return;
+  const pdf_path = st.layouts[name]?.pdf_path;
+  await sb.from('layouts').delete().eq('name', name);
+  if (pdf_path) await sb.storage.from('pdfs').remove([pdf_path]);
+  delete st.layouts[name];
+  if (st.currentLayout === name) st.currentLayout = null;
+  renderLayoutList();
+}
+
+async function openLayout(name) {
+  const layout = st.layouts[name];
+  if (!layout) return;
+
+  function apply() {
+    st.stamps = (layout.stamps || []).map(s => {
+      if (s.nx === undefined && s.x !== undefined) { s.nx = s.x/1000; s.ny = s.y/1000; }
+      return s;
+    });
+    st.keptPages = layout.keptPages || st.keptPages;
+    st.stampSize = layout.stampSize || 24;
+    st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
+    st.currentLayout = name;
+    st.pageIdx = 0;
+    st.selectedIds.clear();
+    document.getElementById('stampSizeInput').value = st.stampSize;
+    renderFixtureList();
+    renderCustomList();
+    renderLayoutList();
+    renderLegend();
+  }
+
+  if (st.pdfDoc) { apply(); renderPdfPage(); return; }
+
+  // Try loading PDF from Supabase storage
+  if (layout.pdf_path) {
+    const { data } = await sb.storage.from('pdfs').download(layout.pdf_path);
+    if (data) {
+      const buf = await data.arrayBuffer();
+      st.pdfBuffer = buf.slice(0);
+      st.pdfName = layout.pdfName || name;
+      st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+      apply();
+      ensureCanvas();
+      renderPdfPage();
+      return;
+    }
+  }
+
+  // Fallback: ask for upload
+  if (!confirm(`PDF not found. Please re-upload "${layout.pdfName || name}.pdf"`)) return;
+  document.getElementById('fileInput').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    await handleFileUpload(file);
+    apply(); ensureCanvas(); renderPdfPage();
+    bindFileInput();
+    e.target.value = '';
+  };
+  document.getElementById('fileInput').click();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// STAMP SVG
+// ══════════════════════════════════════════════════════════════════════════
+function stampSVG(f, size, selected = false) {
+  size = size || st.stampSize;
+  const s = size, hs = s/2, c = f.color;
+  const glow = selected ? `filter:drop-shadow(0 0 4px ${c})` : '';
+  let shape = '';
+  if (f.shape==='circle') shape=`<circle cx="${hs}" cy="${hs}" r="${hs-1.5}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='square') shape=`<rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="3" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='roundedrect') shape=`<rect x="1.5" y="${s*.25}" width="${s-3}" height="${s*.5}" rx="${s*.15}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='diamond') shape=`<polygon points="${hs},1.5 ${s-1.5},${hs} ${hs},${s-1.5} 1.5,${hs}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='triangle') shape=`<polygon points="${hs},1.5 ${s-1.5},${s-1.5} 1.5,${s-1.5}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='plus') { const t=s*.22,o=s*.08; shape=`<path d="M${hs-t},${o} L${hs+t},${o} L${hs+t},${hs-t} L${s-o},${hs-t} L${s-o},${hs+t} L${hs+t},${hs+t} L${hs+t},${s-o} L${hs-t},${s-o} L${hs-t},${hs+t} L${o},${hs+t} L${o},${hs-t} L${hs-t},${hs-t} Z" fill="${c}" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>` }
+  else if (f.shape==='hexagon') { const r=hs-1.5,pts=Array.from({length:6},(_,i)=>{const a=(Math.PI/180)*(60*i-30);return`${hs+r*Math.cos(a)},${hs+r*Math.sin(a)}`;}).join(' '); shape=`<polygon points="${pts}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`; }
+  const fs = Math.max(7, Math.round(s*.38));
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="${glow}" xmlns="http://www.w3.org/2000/svg" opacity="0.70">
+    ${shape}
+    <text x="${hs}" y="${hs}" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${f.letter}</text>
+  </svg>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// RENDER SIDEBAR
+// ══════════════════════════════════════════════════════════════════════════
+function renderFixtureList() {
+  const el = document.getElementById('fixtureList');
+  if (!el) return;
+  const counts = {};
+  st.stamps.forEach(s => { counts[s.fixtureId] = (counts[s.fixtureId]||0)+1; });
+  el.innerHTML = '';
+  allFixtures().forEach(f => {
+    const placing = st.mode==='place' && st.activeFixture===f.id;
+    const count = counts[f.id]||0;
+    const row = document.createElement('div');
+    row.className = 'fixture-row' + (placing?' placing':'');
+    row.innerHTML = `
+      <span class="swatch">${stampSVG(f,20)}</span>
+      <span class="fx-label">${f.label}</span>
+      <span class="fx-count${count?'':' zero'}">${count||'—'}</span>
+      <button class="place-btn${placing?' active':''}" title="Place ${f.label}">✏</button>
+    `;
+    row.querySelector('.place-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      placing ? deactivatePlace() : activatePlace(f.id);
+    });
+    el.appendChild(row);
+  });
+}
+function renderLegend() { renderFixtureList(); }
+
+function renderCustomList() {
+  const el = document.getElementById('customList');
+  if (!el) return;
+  el.innerHTML = '';
+  const counts = {};
+  st.stamps.forEach(s => { counts[s.fixtureId]=(counts[s.fixtureId]||0)+1; });
+  st.customStamps.forEach(cs => {
+    const placing = st.mode==='place' && st.activeFixture===cs.id;
+    const count = counts[cs.id]||0;
+    const row = document.createElement('div');
+    row.className = 'fixture-row' + (placing?' placing':'');
+    row.innerHTML = `
+      <span class="swatch">${stampSVG(cs,20)}</span>
+      <span class="fx-label" style="font-size:12px">${cs.label}</span>
+      <span class="fx-count${count?'':' zero'}" style="font-size:12px">${count||'—'}</span>
+      <button class="place-btn${placing?' active':''}" title="Place">✏</button>
+      <button class="place-btn" title="Delete" style="color:#f87171">×</button>
+    `;
+    const btns = row.querySelectorAll('.place-btn');
+    btns[0].addEventListener('click', e => { e.stopPropagation(); placing?deactivatePlace():activatePlace(cs.id); });
+    btns[1].addEventListener('click', e => {
+      e.stopPropagation();
+      st.customStamps = st.customStamps.filter(x=>x.id!==cs.id);
+      st.stamps = st.stamps.filter(s=>s.fixtureId!==cs.id);
+      if (st.activeFixture===cs.id) deactivatePlace();
+      renderCustomList(); renderFixtureList(); renderStamps();
+    });
+    el.appendChild(row);
+  });
+}
+
+function renderLayoutList() {
+  const el = document.getElementById('layoutList');
+  if (!el) return;
+  const names = Object.keys(st.layouts);
+  if (!names.length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; return; }
+  el.innerHTML = '';
+  names.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'layout-item' + (st.currentLayout===name?' active':'');
+    item.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span><span class="layout-del">×</span>`;
+    item.querySelector('span:first-child').onclick = () => openLayout(name);
+    item.querySelector('.layout-del').onclick = e => { e.stopPropagation(); deleteLayout(name); };
+    el.appendChild(item);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MODE
+// ══════════════════════════════════════════════════════════════════════════
+function activatePlace(id) {
+  st.mode='place'; st.activeFixture=id; st.selectedIds.clear();
+  const pc = document.getElementById('pdfCanvas');
+  if (pc) pc.style.cursor='crosshair';
+  const sl = document.getElementById('stampLayer');
+  if (sl) sl.style.pointerEvents='none';
+  renderFixtureList(); renderCustomList(); renderStamps();
+}
+function deactivatePlace() {
+  st.mode='select';
+  const pc = document.getElementById('pdfCanvas');
+  if (pc) pc.style.cursor='default';
+  const sl = document.getElementById('stampLayer');
+  if (sl) sl.style.pointerEvents='all';
+  renderFixtureList(); renderCustomList(); renderStamps();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PDF UPLOAD
+// ══════════════════════════════════════════════════════════════════════════
+async function handleFileUpload(file) {
+  st.pdfName = file.name.replace(/\.pdf$/i,'');
+  const buf = await file.arrayBuffer();
+  st.pdfBuffer = buf.slice(0);
+  st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+}
+
+function bindFileInput() {
+  document.getElementById('fileInput').onchange = async e => {
+    const file = e.target.files[0]; if (!file) return;
+    await handleFileUpload(file);
+    const kept = await showPagePicker(st.pdfDoc);
+    e.target.value = '';
+    if (!kept || !kept.length) return;
+    st.keptPages = kept; st.pageIdx = 0;
+    ensureCanvas(); renderPdfPage();
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PAGE PICKER
+// ══════════════════════════════════════════════════════════════════════════
+async function showPagePicker(pdfDoc) {
+  const total = pdfDoc.numPages;
+  const selected = new Set(Array.from({length:total},(_,i)=>i+1));
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'picker-overlay';
+    ov.innerHTML = `
+      <div class="picker-box">
+        <div class="picker-header">
+          <h2>📄 Select Pages to Keep</h2>
+          <button class="tool-btn" id="pSelAll">Select All</button>
+          <button class="tool-btn" id="pSelNone">Deselect All</button>
+        </div>
+        <div class="picker-grid" id="pGrid"></div>
+        <div class="picker-footer">
+          <div class="picker-count"><strong id="pCount">${total}</strong> of ${total} pages</div>
+          <button class="tool-btn" id="pCancel">Cancel</button>
+          <button class="hdr-btn primary" id="pConfirm">Confirm →</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    const grid = ov.querySelector('#pGrid');
+
+    function upd() { ov.querySelector('#pCount').textContent=selected.size; ov.querySelector('#pConfirm').disabled=!selected.size; }
+    function toggle(card,n) { selected.has(n)?selected.delete(n):selected.add(n); card.classList.toggle('checked',selected.has(n)); upd(); }
+
+    for (let i=1;i<=total;i++) {
+      const card = document.createElement('div');
+      card.className='thumb-card checked'; card.dataset.page=i;
+      card.innerHTML=`<div class="thumb-preview" id="tp${i}"><span class="thumb-loading">Rendering…</span></div>
+        <div class="thumb-footer"><span class="thumb-label">Page ${i}</span>
+        <div class="thumb-check"><svg class="check-icon" width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
+      card.addEventListener('click',()=>toggle(card,parseInt(card.dataset.page)));
+      grid.appendChild(card);
+      (async(n)=>{
+        const page=await pdfDoc.getPage(n),vp=page.getViewport({scale:.3}),cv=document.createElement('canvas');
+        cv.width=vp.width;cv.height=vp.height;
+        await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+        const w=ov.querySelector(`#tp${n}`);if(w){w.innerHTML='';w.appendChild(cv);}
+      })(i);
+    }
+
+    ov.querySelector('#pSelAll').onclick=()=>{grid.querySelectorAll('.thumb-card').forEach(c=>{selected.add(parseInt(c.dataset.page));c.classList.add('checked');});upd();};
+    ov.querySelector('#pSelNone').onclick=()=>{selected.clear();grid.querySelectorAll('.thumb-card').forEach(c=>c.classList.remove('checked'));upd();};
+    ov.querySelector('#pCancel').onclick=()=>{ov.remove();resolve(null);};
+    ov.querySelector('#pConfirm').onclick=()=>{ov.remove();resolve(Array.from(selected).sort((a,b)=>a-b));};
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// CANVAS
+// ══════════════════════════════════════════════════════════════════════════
+function ensureCanvas() {
+  const wrap = document.getElementById('canvasWrap');
+  if (document.getElementById('canvasContainer')) return;
+  wrap.innerHTML = '';
+  const container = document.createElement('div'); container.id='canvasContainer';
+  const pdfCv = document.createElement('canvas'); pdfCv.id='pdfCanvas'; pdfCv.style.cursor='default';
+  const sl = document.createElement('div'); sl.id='stampLayer';
+  const gl = document.createElementNS('http://www.w3.org/2000/svg','svg'); gl.id='guideLayer';
+  gl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;';
+  container.appendChild(pdfCv); container.appendChild(sl); container.appendChild(gl);
+  wrap.appendChild(container);
+  bindCanvasEvents(pdfCv, sl, container);
+}
+
+async function renderPdfPage() {
+  const orig = curPage(); if (!orig || !st.pdfDoc) return;
+  ensureCanvas();
+  const page = await st.pdfDoc.getPage(orig);
+  const vp = page.getViewport({scale: st.scale});
+  const cv = document.getElementById('pdfCanvas');
+  const container = document.getElementById('canvasContainer');
+  cv.width=vp.width; cv.height=vp.height;
+  container.style.width=vp.width+'px'; container.style.height=vp.height+'px';
+  await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}  (orig p.${orig})  •  ${st.pdfName}`;
+  document.getElementById('prevPage').disabled=st.pageIdx<=0;
+  document.getElementById('nextPage').disabled=st.pageIdx>=st.keptPages.length-1;
+  renderStamps();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// STAMPS
+// ══════════════════════════════════════════════════════════════════════════
+function renderStamps() {
+  const layer = document.getElementById('stampLayer'); if (!layer) return;
+  layer.innerHTML='';
+  const cv=document.getElementById('pdfCanvas');
+  const W=cv?cv.offsetWidth:1, H=cv?cv.offsetHeight:1;
+  st.stamps.filter(s=>s.origPage===curPage()).forEach(s=>{
+    const f=allFixtures().find(x=>x.id===s.fixtureId); if(!f) return;
+    const px=s.nx*W, py=s.ny*H, sel=st.selectedIds.has(s.id);
+    const el=document.createElement('div');
+    el.className='stamp'+(sel?' selected':'');
+    el.style.left=px+'px'; el.style.top=py+'px';
+    el.innerHTML=stampSVG(f,st.stampSize,sel);
+    el.addEventListener('pointerdown',e=>{
+      if(st.mode!=='select') return;
+      e.stopPropagation();
+      if(e.shiftKey){sel?st.selectedIds.delete(s.id):st.selectedIds.add(s.id);renderStamps();return;}
+      if(!sel){st.selectedIds.clear();st.selectedIds.add(s.id);renderStamps();}
+      const origins={};
+      st.selectedIds.forEach(id=>{const st2=st.stamps.find(x=>x.id===id);if(st2)origins[id]={nx:st2.nx,ny:st2.ny};});
+      st.dragState={startX:e.clientX,startY:e.clientY,W,H,origins};
+    });
+    if(st.mode==='place'){
+      el.style.pointerEvents='all';
+      el.addEventListener('pointerenter',()=>{
+        clearTimeout(st.snapTimer);
+        st.snapTimer=setTimeout(()=>{
+          if(!st.snaps.some(a=>a.nx===s.nx&&a.ny===s.ny)&&st.snaps.length<2){
+            st.snaps.push({nx:s.nx,ny:s.ny}); redrawGuide();
+          }
+        },1000);
+      });
+      el.addEventListener('pointerleave',()=>{clearTimeout(st.snapTimer);st.snapTimer=null;});
+    }
+    layer.appendChild(el);
+  });
+  layer.style.pointerEvents=st.mode==='place'?'none':'all';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// GUIDE LINES
+// ══════════════════════════════════════════════════════════════════════════
+function redrawGuide(cx,cy) {
+  const svg=document.getElementById('guideLayer'); if(!svg||!st.snaps.length) return;
+  const w=svg.parentElement.offsetWidth, h=svg.parentElement.offsetHeight;
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  let html='';
+  st.snaps.forEach(a=>{
+    const ax=a.nx*w,ay=a.ny*h;
+    html+=`<line x1="0" y1="${ay}" x2="${w}" y2="${ay}" stroke="#facc15" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>
+           <line x1="${ax}" y1="0" x2="${ax}" y2="${h}" stroke="#facc15" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>
+           <circle cx="${ax}" cy="${ay}" r="6" fill="none" stroke="#facc15" stroke-width="2" opacity="0.95"/>`;
+  });
+  if(cx!==undefined){
+    let dx=cx,dy=cy;
+    st.snaps.forEach(a=>{const ax=a.nx*w,ay=a.ny*h;if(Math.abs(dx-ax)<40)dx=ax;if(Math.abs(dy-ay)<40)dy=ay;});
+    html+=`<circle cx="${dx}" cy="${dy}" r="8" fill="#facc15" opacity="0.7"/><circle cx="${dx}" cy="${dy}" r="3" fill="#fff" opacity="0.9"/>`;
+  }
+  svg.innerHTML=html; svg.style.display='block';
+}
+function hideGuide(){const g=document.getElementById('guideLayer');if(g){g.style.display='none';g.innerHTML='';}st.snaps=[];clearTimeout(st.snapTimer);st.snapTimer=null;}
+
+// ══════════════════════════════════════════════════════════════════════════
+// CANVAS EVENTS
+// ══════════════════════════════════════════════════════════════════════════
+function pointInPoly(px,py,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))inside=!inside;}return inside;}
+
+function bindCanvasEvents(pdfCv, stampLayer, container) {
+  let lassoActive=false, lassoPoints=[], lassoSvg=null;
+
+  pdfCv.addEventListener('pointermove',e=>{
+    if(st.mode!=='place'||!st.snaps.length) return;
+    const r=pdfCv.getBoundingClientRect();
+    redrawGuide(e.clientX-r.left,e.clientY-r.top);
+  });
+
+  pdfCv.addEventListener('pointerdown',e=>{
+    if(st.mode!=='place') return;
+    const r=pdfCv.getBoundingClientRect();
+    let px=e.clientX-r.left, py=e.clientY-r.top;
+    const W=r.width, H=r.height;
+    if(st.snaps.length){
+      const T=40;
+      st.snaps.forEach(a=>{const ax=a.nx*W,ay=a.ny*H;if(Math.abs(px-ax)<T)px=ax;if(Math.abs(py-ay)<T)py=ay;});
+    }
+    st.stamps.push({id:Date.now()+Math.random(),fixtureId:st.activeFixture,nx:px/W,ny:py/H,origPage:curPage()});
+    renderStamps(); renderLegend(); hideGuide();
+  });
+
+  stampLayer.addEventListener('pointerdown',e=>{
+    if(st.mode!=='select') return;
+    if(e.target.closest('.stamp')) return;
+    if(!e.shiftKey){st.selectedIds.clear();renderStamps();}
+    lassoActive=true; lassoPoints=[];
+    const r=stampLayer.getBoundingClientRect();
+    lassoPoints.push([e.clientX-r.left,e.clientY-r.top]);
+    lassoSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    lassoSvg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;';
+    lassoSvg.setAttribute('viewBox',`0 0 ${stampLayer.offsetWidth} ${stampLayer.offsetHeight}`);
+    container.appendChild(lassoSvg);
+    stampLayer.setPointerCapture(e.pointerId);
+  });
+
+  stampLayer.addEventListener('pointermove',e=>{
+    if(!lassoActive||st.mode!=='select') return;
+    const r=stampLayer.getBoundingClientRect();
+    lassoPoints.push([e.clientX-r.left,e.clientY-r.top]);
+    lassoSvg.innerHTML=`<polyline points="${lassoPoints.map(p=>p.join(',')).join(' ')}" fill="rgba(250,204,21,0.08)" stroke="#facc15" stroke-width="1.5" stroke-dasharray="5 3"/>`;
+  });
+
+  stampLayer.addEventListener('pointerup',e=>{
+    if(!lassoActive||st.mode!=='select') return;
+    lassoActive=false; if(lassoSvg){lassoSvg.remove();lassoSvg=null;}
+    if(lassoPoints.length<3) return;
+    const cv=document.getElementById('pdfCanvas');
+    const W=cv?cv.offsetWidth:1, H=cv?cv.offsetHeight:1;
+    st.stamps.filter(s=>s.origPage===curPage()).forEach(s=>{
+      if(pointInPoly(s.nx*W,s.ny*H,lassoPoints)) st.selectedIds.add(s.id);
+    });
+    lassoPoints=[]; renderStamps();
+  });
+
+  document.addEventListener('pointermove',e=>{
+    if(!st.dragState||st.mode!=='select') return;
+    const {startX,startY,W,H,origins}=st.dragState;
+    const dx=(e.clientX-startX)/W, dy=(e.clientY-startY)/H;
+    for(const [id,orig] of Object.entries(origins)){
+      const s=st.stamps.find(x=>x.id===parseFloat(id));
+      if(s){s.nx=Math.max(0,Math.min(1,orig.nx+dx));s.ny=Math.max(0,Math.min(1,orig.ny+dy));}
+    }
+    renderStamps();
+  });
+  document.addEventListener('pointerup',()=>{ st.dragState=null; });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(!st.user) return;
+  const inInput=document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
+  if(e.key==='Escape'){
+    if(st.mode==='place'){deactivatePlace();return;}
+    if(st.snaps.length){hideGuide();return;}
+    if(st.selectedIds.size){st.selectedIds.clear();renderStamps();return;}
+  }
+  if(e.key===' '&&!inInput){e.preventDefault();if(st.mode==='place')deactivatePlace();return;}
+  if((e.key==='Delete'||e.key==='Backspace')&&st.selectedIds.size&&!inInput){
+    st.stamps=st.stamps.filter(s=>!st.selectedIds.has(s.id));
+    st.selectedIds.clear(); renderStamps(); renderLegend();
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// EXPORT PDF
+// ══════════════════════════════════════════════════════════════════════════
+async function loadJsPDF(){
+  if(window.jspdf||window.jsPDF) return (window.jspdf||window.jsPDF).jsPDF||(window.jspdf||window.jsPDF);
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=()=>{const l=window.jspdf||window.jsPDF;l?res(l.jsPDF||l):rej(new Error('jsPDF not found'));};
+    s.onerror=()=>rej(new Error('Failed to load jsPDF'));
+    document.head.appendChild(s);
+  });
+}
+
+async function exportPDF() {
+  if(!st.pdfDoc||!st.keptPages.length) return alert('No PDF loaded.');
+  let jsPDF; try{jsPDF=await loadJsPDF();}catch(e){return alert('Could not load jsPDF: '+e.message);}
+
+  // Legend page
+  const LW=1700,LH=2600,lc=Object.assign(document.createElement('canvas'),{width:LW,height:LH}).getContext('2d');
+  lc.fillStyle='#001f35';lc.fillRect(0,0,LW,LH);
+  lc.fillStyle='#001529';lc.fillRect(0,0,LW,180);
+  lc.strokeStyle='#0e3358';lc.lineWidth=2;lc.beginPath();lc.moveTo(0,180);lc.lineTo(LW,180);lc.stroke();
+  lc.fillStyle='#e2eaf8';lc.font='bold 72px sans-serif';lc.textAlign='left';lc.textBaseline='middle';
+  lc.fillText('💡 Lighting Layout — Legend',80,90);
+  lc.fillStyle='#4b6a9a';lc.font='40px sans-serif';lc.fillText(st.pdfName||'Unnamed Plan',80,148);
+
+  const counts={};st.stamps.forEach(s=>{counts[s.fixtureId]=(counts[s.fixtureId]||0)+1;});
+  const used=allFixtures().filter(f=>counts[f.id]>0);
+  const RH=180,SY=260,SW=90,PAD=80;
+  used.forEach((f,idx)=>{
+    const y=SY+idx*RH,mid=y+RH/2,r=SW/2-3,sx=PAD+SW/2,sy=mid;
+    lc.globalAlpha=1;
+    lc.fillStyle='rgba(14,51,88,0.5)';lc.beginPath();lc.roundRect(PAD-16,y+6,LW-(PAD-16)*2,RH-12,10);lc.fill();
+    if(idx>0){lc.globalAlpha=0.2;lc.strokeStyle='#2563eb';lc.lineWidth=1;lc.beginPath();lc.moveTo(PAD,y+6);lc.lineTo(LW-PAD,y+6);lc.stroke();}
+    lc.globalAlpha=1;lc.strokeStyle='#fff';lc.lineWidth=3;lc.fillStyle=f.color;
+    drawShape(lc,f.shape,sx,sy,r);
+    lc.fillStyle='#fff';lc.font=`bold ${Math.round(SW*.38)}px sans-serif`;lc.textAlign='center';lc.textBaseline='middle';lc.fillText(f.letter,sx,sy);
+    lc.fillStyle='#e2eaf8';lc.font='bold 52px sans-serif';lc.textAlign='left';lc.fillText(f.label,PAD+SW+36,mid);
+    lc.textAlign='right';lc.fillStyle='#e2e8f0';lc.font='bold 100px sans-serif';lc.fillText(counts[f.id],LW-PAD-16,mid);
+  });
+  const totalY=SY+used.length*RH+30;
+  lc.strokeStyle='#0e3358';lc.lineWidth=2;lc.beginPath();lc.moveTo(80,totalY);lc.lineTo(LW-80,totalY);lc.stroke();
+  lc.fillStyle='#e2e8f0';lc.font='bold 48px sans-serif';lc.textAlign='left';lc.textBaseline='middle';
+  lc.fillText(`Total fixtures: ${st.stamps.length}`,80,totalY+50);
+  lc.fillStyle='#001529';lc.fillRect(0,LH-80,LW,80);
+  lc.fillStyle='#1e3a55';lc.font='30px sans-serif';lc.textAlign='center';lc.textBaseline='middle';
+  lc.fillText(`Holland Homes Lighting Layout  •  ${new Date().toLocaleDateString()}`,LW/2,LH-40);
+
+  const doc=new jsPDF({orientation:'p',unit:'mm',format:'letter'});
+  doc.addImage(lc.canvas.toDataURL('image/png'),'PNG',0,0,216,279);
+
+  for(let i=0;i<st.keptPages.length;i++){
+    const orig=st.keptPages[i],page=await st.pdfDoc.getPage(orig),vp=page.getViewport({scale:2});
+    const oc=document.createElement('canvas');oc.width=vp.width;oc.height=vp.height;
+    const ctx=oc.getContext('2d');
+    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    st.stamps.filter(s=>s.origPage===orig).forEach(s=>{
+      const f=allFixtures().find(x=>x.id===s.fixtureId);if(!f)return;
+      const dx=s.nx*vp.width,dy=s.ny*vp.height,sz=st.stampSize*2,hs=sz/2;
+      ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.fillStyle=f.color;ctx.globalAlpha=0.70;
+      drawShapeCanvas(ctx,f.shape,dx,dy,hs,sz);
+      ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.font=`700 ${Math.round(sz*.38)}px sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(f.letter,dx,dy);
+      ctx.restore();
+    });
+    const pW=vp.width*.264583,pH=vp.height*.264583;
+    doc.addPage([pW,pH],pW>pH?'l':'p');
+    doc.addImage(oc.toDataURL('image/png'),'PNG',0,0,pW,pH);
+  }
+  doc.save((st.pdfName||'lighting-layout')+'-annotated.pdf');
+}
+
+function drawShape(ctx,shape,sx,sy,r){
+  ctx.beginPath();
+  if(shape==='circle')ctx.arc(sx,sy,r,0,Math.PI*2);
+  else if(shape==='square')ctx.roundRect(sx-r,sy-r,r*2,r*2,6);
+  else if(shape==='roundedrect')ctx.roundRect(sx-r,sy-r*.5,r*2,r,r*.3);
+  else if(shape==='diamond'){ctx.moveTo(sx,sy-r);ctx.lineTo(sx+r,sy);ctx.lineTo(sx,sy+r);ctx.lineTo(sx-r,sy);ctx.closePath();}
+  else if(shape==='triangle'){ctx.moveTo(sx,sy-r);ctx.lineTo(sx+r,sy+r);ctx.lineTo(sx-r,sy+r);ctx.closePath();}
+  else if(shape==='plus'){const t=r*.44,o=r*.16;ctx.moveTo(sx-t,sy-r+o);ctx.lineTo(sx+t,sy-r+o);ctx.lineTo(sx+t,sy-t);ctx.lineTo(sx+r-o,sy-t);ctx.lineTo(sx+r-o,sy+t);ctx.lineTo(sx+t,sy+t);ctx.lineTo(sx+t,sy+r-o);ctx.lineTo(sx-t,sy+r-o);ctx.lineTo(sx-t,sy+t);ctx.lineTo(sx-r+o,sy+t);ctx.lineTo(sx-r+o,sy-t);ctx.lineTo(sx-t,sy-t);ctx.closePath();}
+  else if(shape==='hexagon'){for(let i=0;i<6;i++){const a=(Math.PI/180)*(60*i-30);i===0?ctx.moveTo(sx+r*Math.cos(a),sy+r*Math.sin(a)):ctx.lineTo(sx+r*Math.cos(a),sy+r*Math.sin(a));}ctx.closePath();}
+  ctx.fill();ctx.stroke();
+}
+
+function drawShapeCanvas(ctx,shape,dx,dy,hs,sz){
+  const sw=1.5;
+  ctx.beginPath();
+  if(shape==='circle')ctx.arc(dx,dy,hs-sw,0,Math.PI*2);
+  else if(shape==='square')ctx.roundRect(dx-hs+sw,dy-hs+sw,sz-sw*2,sz-sw*2,3);
+  else if(shape==='roundedrect')ctx.roundRect(dx-hs+sw,dy-hs+sz*.25,sz-sw*2,sz*.5,sz*.15);
+  else if(shape==='diamond'){ctx.moveTo(dx,dy-hs+sw);ctx.lineTo(dx+hs-sw,dy);ctx.lineTo(dx,dy+hs-sw);ctx.lineTo(dx-hs+sw,dy);ctx.closePath();}
+  else if(shape==='triangle'){ctx.moveTo(dx,dy-hs+sw);ctx.lineTo(dx+hs-sw,dy+hs-sw);ctx.lineTo(dx-hs+sw,dy+hs-sw);ctx.closePath();}
+  else if(shape==='plus'){const t=sz*.22,o=sz*.08;ctx.moveTo(dx-t,dy-hs+o);ctx.lineTo(dx+t,dy-hs+o);ctx.lineTo(dx+t,dy-t);ctx.lineTo(dx+hs-o,dy-t);ctx.lineTo(dx+hs-o,dy+t);ctx.lineTo(dx+t,dy+t);ctx.lineTo(dx+t,dy+hs-o);ctx.lineTo(dx-t,dy+hs-o);ctx.lineTo(dx-t,dy+t);ctx.lineTo(dx-hs+o,dy+t);ctx.lineTo(dx-hs+o,dy-t);ctx.lineTo(dx-t,dy-t);ctx.closePath();}
+  else if(shape==='hexagon'){for(let i=0;i<6;i++){const a=(Math.PI/180)*(60*i-30);i===0?ctx.moveTo(dx+(hs-sw)*Math.cos(a),dy+(hs-sw)*Math.sin(a)):ctx.lineTo(dx+(hs-sw)*Math.cos(a),dy+(hs-sw)*Math.sin(a));}ctx.closePath();}
+  ctx.fill();ctx.stroke();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════════════════
+async function openAdmin() {
+  document.getElementById('adminPanel').classList.add('open');
+  const list = document.getElementById('userList');
+  list.innerHTML = '<div class="status-msg">Loading…</div>';
+  // List all users via Supabase admin API (requires service role — we show current user only for now)
+  list.innerHTML = `<div class="user-row"><span class="user-email">${st.user.email}</span><span class="user-badge admin">Admin</span></div>`;
+}
+
+document.getElementById('adminBtn').onclick = openAdmin;
+document.getElementById('closeAdminBtn').onclick = () => document.getElementById('adminPanel').classList.remove('open');
+
+document.getElementById('inviteBtn').onclick = async () => {
+  const email = document.getElementById('inviteEmail').value.trim();
+  const msg = document.getElementById('inviteMsg');
+  if (!email) return;
+  msg.style.color='#94a3b8'; msg.textContent='Sending invite…';
+  // Use Supabase admin invite — creates account, sends magic link
+  const { error } = await sb.auth.admin?.inviteUserByEmail(email) || 
+    await sb.auth.signUp({ email, password: Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2), options: { emailRedirectTo: window.location.href } });
+  if (error) { msg.style.color='#ef4444'; msg.textContent=error.message; }
+  else { msg.style.color='#22c55e'; msg.textContent=`Invite sent to ${email}`; document.getElementById('inviteEmail').value=''; }
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// CUSTOM STAMP DIALOG
+// ══════════════════════════════════════════════════════════════════════════
+const csDialog = document.getElementById('customDialog');
+const csColorRow = document.getElementById('csColorRow');
+const csShape = document.getElementById('csShape');
+let csColor = '#22C55E';
+
+CUSTOM_SHAPES.forEach(sh => { const o=document.createElement('option');o.value=sh;o.textContent=sh.charAt(0).toUpperCase()+sh.slice(1);csShape.appendChild(o); });
+CUSTOM_COLORS.forEach(col => {
+  const d=document.createElement('div');d.className='color-swatch';d.style.background=col;d.dataset.color=col;
+  d.addEventListener('click',()=>{csColorRow.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');csColor=col;document.getElementById('csColorPicker').value=col;});
+  csColorRow.appendChild(d);
+});
+document.getElementById('csColorPicker').addEventListener('input',e=>{csColor=e.target.value;csColorRow.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('sel'));});
+document.getElementById('addCustomBtn').onclick=()=>csDialog.classList.toggle('open');
+document.getElementById('csCancelBtn').onclick=()=>csDialog.classList.remove('open');
+document.getElementById('csAddBtn').onclick=()=>{
+  const label=document.getElementById('csName').value.trim();
+  if(!label){document.getElementById('csName').focus();return;}
+  const letter=(document.getElementById('csLetter').value.trim()||label.charAt(0)).toUpperCase().slice(0,2);
+  const cs={id:'custom_'+Date.now(),label,shape:csShape.value,color:csColor,letter};
+  st.customStamps.push(cs);
+  renderCustomList();renderFixtureList();
+  csDialog.classList.remove('open');
+  document.getElementById('csName').value='';document.getElementById('csLetter').value='';
+  activatePlace(cs.id);
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// UI EVENTS
+// ══════════════════════════════════════════════════════════════════════════
+document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
+bindFileInput();
+
+document.getElementById('prevPage').onclick=async()=>{ if(st.pageIdx>0){st.pageIdx--;await renderPdfPage();} };
+document.getElementById('nextPage').onclick=async()=>{ if(st.pageIdx<st.keptPages.length-1){st.pageIdx++;await renderPdfPage();} };
+document.getElementById('zoomSel').onchange=async e=>{ st.scale=parseFloat(e.target.value);if(st.pdfDoc)await renderPdfPage(); };
+document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.target.value);if(v>=8&&v<=80){st.stampSize=v;renderStamps();renderLegend();} };
+document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all stamps on this page?'))return;st.stamps=st.stamps.filter(s=>s.origPage!==curPage());st.selectedIds.clear();renderStamps();renderLegend(); };
+document.getElementById('exportBtn').onclick=exportPDF;
+document.getElementById('saveLayoutBtn').onclick=async()=>{ const n=document.getElementById('layoutName').value.trim();await saveLayout(n||'Layout '+(Object.keys(st.layouts).length+1));document.getElementById('layoutName').value=''; };
+</script>
+</body>
+</html>
