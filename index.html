@@ -547,8 +547,9 @@ async function loadLayouts() {
 async function saveLayout(name) {
   console.log('[save] called with name:', name);
   if (!name.trim()) return alert('Enter a layout name.');
-  console.log('[save] building payload');
+  console.log('[save] building payload v4');
   try {
+  console.log('[save] inside try');
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
     pdfName: st.pdfName,
