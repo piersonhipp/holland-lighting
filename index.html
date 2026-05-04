@@ -123,6 +123,12 @@
   #sidebarSpacer { min-height: 8px; }
   #customSection { position: relative; flex-shrink: 0; }
   #layoutMgr { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  #layoutSearch {
+    width: 100%; box-sizing: border-box; padding: 5px 8px; margin-bottom: 5px;
+    border: 1px solid var(--border); border-radius: 5px; font-size: 12px;
+    color: var(--text); background: #fff; outline: none; font-family: inherit;
+  }
+  #layoutSearch:focus { border-color: var(--blue); box-shadow: 0 0 0 2px #2563eb22; }
   #layoutList { flex: 1; overflow-y: auto; margin-bottom: 6px; min-height: 0; }
   .layout-item {
     display: flex; align-items: center; gap: 6px; padding: 5px 7px;
@@ -431,6 +437,7 @@
       </div>
       <div id="layoutMgr">
         <div class="section-label">Saved Layouts</div>
+        <input id="layoutSearch" placeholder="Search layouts…" oninput="renderLayoutList()">
         <div id="layoutList"></div>
         <div style="display:flex;gap:6px;margin-top:4px">
           <input class="layout-input" id="layoutName" placeholder="Layout name…">
@@ -825,8 +832,12 @@ function renderCustomList() {
 function renderLayoutList() {
   const el = document.getElementById('layoutList');
   if (!el) return;
-  const names = Object.keys(st.layouts);
-  if (!names.length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; return; }
+  const query = (document.getElementById('layoutSearch')?.value || '').toLowerCase().trim();
+  const names = Object.keys(st.layouts)
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    .filter(n => !query || n.toLowerCase().includes(query));
+  if (!Object.keys(st.layouts).length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; return; }
+  if (!names.length) { el.innerHTML = '<div class="status-msg">No matches</div>'; return; }
   el.innerHTML = '';
   names.forEach(name => {
     const item = document.createElement('div');
