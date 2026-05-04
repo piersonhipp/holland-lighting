@@ -368,6 +368,7 @@
 <div id="app">
   <div id="appHeader">
     <h1>💡 Lighting Layout</h1>
+    <button class="hdr-btn" id="newLayoutBtn">+ New</button>
     <button class="hdr-btn" id="uploadBtn">📄 Upload PDF</button>
     <input type="file" id="fileInput" accept="application/pdf" style="display:none">
     <div class="sep"></div>
@@ -1285,6 +1286,25 @@ document.addEventListener('keydown', e => {
 document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.target.value);if(v>=8&&v<=80){st.stampSize=v;renderStamps();renderLegend();} };
 document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all stamps on this page?'))return;st.stamps=st.stamps.filter(s=>s.origPage!==curPage());st.selectedIds.clear();renderStamps();renderLegend(); };
 document.getElementById('exportBtn').onclick=exportPDF;
+
+document.getElementById('newLayoutBtn').onclick = () => {
+  if (st.stamps.length || st.pdfDoc) {
+    if (!confirm('Start a new layout? Unsaved changes will be lost.')) return;
+  }
+  st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
+  st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
+  st.currentLayout = null; st.stampSize = 24; st.customStamps = [];
+  st.mode = 'select'; deactivatePlace();
+  document.getElementById('stampSizeInput').value = 24;
+  document.getElementById('layoutName').value = '';
+  applyZoom(1);
+  const wrap = document.getElementById('canvasWrap');
+  wrap.innerHTML = `<div id="dropOverlay"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg><div>Drop PDF to open</div></div><div id="emptyState"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg><div>Upload a PDF floor plan to begin</div><div style="font-size:12px;color:#cbd5e1">or drag and drop a PDF anywhere</div></div>`;
+  document.getElementById('pageInfo').textContent = 'No PDF loaded';
+  document.getElementById('prevPage').disabled = true;
+  document.getElementById('nextPage').disabled = true;
+  renderFixtureList(); renderCustomList(); renderLayoutList();
+};
 document.getElementById('saveLayoutBtn').onclick=async()=>{ const n=document.getElementById('layoutName').value.trim();await saveLayout(n||'Layout '+(Object.keys(st.layouts).length+1));document.getElementById('layoutName').value=''; };
 document.addEventListener('click', () => { document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open')); });
 
