@@ -326,10 +326,11 @@
 
   /* Custom stamp dialog */
   #customDialog {
-    display: none; position: absolute; top: 0; left: calc(100% + 8px);
+    display: none; position: fixed; top: 50%; left: 248px;
+    transform: translateY(-50%);
     width: 220px;
     background: var(--navy-mid); border: 1px solid var(--border); border-radius: 8px;
-    padding: 12px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    padding: 12px; z-index: 200; box-shadow: 0 8px 32px rgba(0,0,0,0.32);
   }
   #customDialog.open { display: block; }
   .dlg-label { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
