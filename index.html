@@ -270,6 +270,7 @@
   .tool-number:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); }
   .tool-select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); outline: none; }
   .dlg-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); }
+  .tool-btn.flipped { background: rgba(37,99,235,0.25); color: var(--blue-hover); border-color: var(--blue); }
   #canvasWrap {
     flex: 1; overflow: auto; background: #b8c4d4;
     display: flex; align-items: flex-start; padding: 20px;
@@ -548,6 +549,8 @@
         <div class="sep"></div>
         <button class="tool-btn" id="copyStampsBtn" disabled title="Copy selected stamps (Ctrl+C)">⎘ Copy</button>
         <button class="tool-btn" id="pasteStampsBtn" disabled title="Paste stamps onto current page (Ctrl+V)">⎘ Paste</button>
+        <div class="sep"></div>
+        <button class="tool-btn" id="flipBtn" title="Flip current page horizontally">⇄ Flip</button>
       </div>
       <div id="canvasWrap">
         <div id="emptyState">
@@ -870,9 +873,11 @@ let st = {
   customStamps: [],
   layouts: {}, currentLayout: null,
   clipboard: [],
+  flippedPages: [],
   dirty: false,
 };
 function curPage() { return st.keptPages[st.pageIdx]; }
+function isFlipped() { return st.flippedPages.includes(curPage()); }
 function allFixtures() { return [...FIXTURES, ...st.customStamps]; }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -961,6 +966,7 @@ async function saveLayout(name) {
     keptPages: [...st.keptPages],
     stampSize: st.stampSize,
     customStamps: JSON.parse(JSON.stringify(st.customStamps)),
+    flippedPages: [...st.flippedPages],
   };
 
   // Upload PDF if we have one (best-effort — layout saves even if upload fails)
@@ -1083,6 +1089,7 @@ async function openLayout(name) {
     st.keptPages = layout.keptPages || st.keptPages;
     st.stampSize = layout.stampSize || 24;
     st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
+    st.flippedPages = layout.flippedPages ? [...layout.flippedPages] : [];
     st.currentLayout = name;
     st.dirty = false;
     st.pageIdx = 0;
@@ -1374,10 +1381,21 @@ async function renderPdfPage() {
   const container = document.getElementById('canvasContainer');
   cv.width=vp.width; cv.height=vp.height;
   container.style.width=vp.width+'px'; container.style.height=vp.height+'px';
-  await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}  (orig p.${orig})  •  ${st.pdfName}`;
+  const ctx = cv.getContext('2d');
+  await page.render({canvasContext:ctx,viewport:vp}).promise;
+  if (isFlipped()) {
+    const tmp = document.createElement('canvas');
+    tmp.width=cv.width; tmp.height=cv.height;
+    tmp.getContext('2d').drawImage(cv,0,0);
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.save(); ctx.translate(cv.width,0); ctx.scale(-1,1);
+    ctx.drawImage(tmp,0,0);
+    ctx.restore();
+  }
+  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}  (orig p.${orig})${isFlipped()?' [flipped]':''}  •  ${st.pdfName}`;
   document.getElementById('prevPage').disabled=st.pageIdx<=0;
   document.getElementById('nextPage').disabled=st.pageIdx>=st.keptPages.length-1;
+  document.getElementById('flipBtn').classList.toggle('flipped', isFlipped());
   renderStamps();
 }
 
@@ -1391,7 +1409,8 @@ function renderStamps() {
   const W=cv?cv.offsetWidth:1, H=cv?cv.offsetHeight:1;
   st.stamps.filter(s=>s.origPage===curPage()).forEach(s=>{
     const f=allFixtures().find(x=>x.id===s.fixtureId); if(!f) return;
-    const px=s.nx*W, py=s.ny*H, sel=st.selectedIds.has(s.id);
+    const dispX=isFlipped()?(1-s.nx)*W:s.nx*W;
+    const px=dispX, py=s.ny*H, sel=st.selectedIds.has(s.id);
     const el=document.createElement('div');
     el.className='stamp'+(sel?' selected':'');
     el.style.left=px+'px'; el.style.top=py+'px';
@@ -1432,14 +1451,14 @@ function redrawGuide(cx,cy) {
   svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
   let html='';
   st.snaps.forEach(a=>{
-    const ax=a.nx*w,ay=a.ny*h;
+    const ax=(isFlipped()?(1-a.nx):a.nx)*w,ay=a.ny*h;
     html+=`<line x1="0" y1="${ay}" x2="${w}" y2="${ay}" stroke="#facc15" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>
            <line x1="${ax}" y1="0" x2="${ax}" y2="${h}" stroke="#facc15" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>
            <circle cx="${ax}" cy="${ay}" r="6" fill="none" stroke="#facc15" stroke-width="2" opacity="0.95"/>`;
   });
   if(cx!==undefined){
     let dx=cx,dy=cy;
-    st.snaps.forEach(a=>{const ax=a.nx*w,ay=a.ny*h;if(Math.abs(dx-ax)<40)dx=ax;if(Math.abs(dy-ay)<40)dy=ay;});
+    st.snaps.forEach(a=>{const ax=(isFlipped()?(1-a.nx):a.nx)*w,ay=a.ny*h;if(Math.abs(dx-ax)<40)dx=ax;if(Math.abs(dy-ay)<40)dy=ay;});
     html+=`<circle cx="${dx}" cy="${dy}" r="8" fill="#facc15" opacity="0.7"/><circle cx="${dx}" cy="${dy}" r="3" fill="#fff" opacity="0.9"/>`;
   }
   svg.innerHTML=html; svg.style.display='block';
@@ -1467,9 +1486,10 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     const W=r.width, H=r.height;
     if(st.snaps.length){
       const T=40;
-      st.snaps.forEach(a=>{const ax=a.nx*W,ay=a.ny*H;if(Math.abs(px-ax)<T)px=ax;if(Math.abs(py-ay)<T)py=ay;});
+      st.snaps.forEach(a=>{const ax=(isFlipped()?(1-a.nx):a.nx)*W,ay=a.ny*H;if(Math.abs(px-ax)<T)px=ax;if(Math.abs(py-ay)<T)py=ay;});
     }
-    st.stamps.push({id:Date.now()+Math.random(),fixtureId:st.activeFixture,nx:px/W,ny:py/H,origPage:curPage()});
+    const rawNx=px/W;
+    st.stamps.push({id:Date.now()+Math.random(),fixtureId:st.activeFixture,nx:isFlipped()?1-rawNx:rawNx,ny:py/H,origPage:curPage()});
     st.dirty = true;
     renderStamps(); renderLegend(); hideGuide();
   });
@@ -1502,7 +1522,8 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     const cv=document.getElementById('pdfCanvas');
     const W=cv?cv.offsetWidth:1, H=cv?cv.offsetHeight:1;
     st.stamps.filter(s=>s.origPage===curPage()).forEach(s=>{
-      if(pointInPoly(s.nx*W,s.ny*H,lassoPoints)) st.selectedIds.add(s.id);
+      const lx=isFlipped()?(1-s.nx)*W:s.nx*W;
+      if(pointInPoly(lx,s.ny*H,lassoPoints)) st.selectedIds.add(s.id);
     });
     lassoPoints=[]; renderStamps();
   });
@@ -1510,7 +1531,8 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   document.addEventListener('pointermove',e=>{
     if(!st.dragState||st.mode!=='select') return;
     const {startX,startY,W,H,origins}=st.dragState;
-    const dx=(e.clientX-startX)/W, dy=(e.clientY-startY)/H;
+    const rawDx=(e.clientX-startX)/W;
+    const dx=isFlipped()?-rawDx:rawDx, dy=(e.clientY-startY)/H;
     for(const [id,orig] of Object.entries(origins)){
       const s=st.stamps.find(x=>x.id===parseFloat(id));
       if(s){s.nx=Math.max(0,Math.min(1,orig.nx+dx));s.ny=Math.max(0,Math.min(1,orig.ny+dy));}
@@ -1641,9 +1663,16 @@ async function exportPDF() {
     const oc=document.createElement('canvas');oc.width=vp.width;oc.height=vp.height;
     const ctx=oc.getContext('2d');
     await page.render({canvasContext:ctx,viewport:vp}).promise;
+    const pageFlipped=st.flippedPages.includes(orig);
+    if(pageFlipped){
+      const tmp=document.createElement('canvas');tmp.width=oc.width;tmp.height=oc.height;
+      tmp.getContext('2d').drawImage(oc,0,0);
+      ctx.clearRect(0,0,oc.width,oc.height);
+      ctx.save();ctx.translate(oc.width,0);ctx.scale(-1,1);ctx.drawImage(tmp,0,0);ctx.restore();
+    }
     st.stamps.filter(s=>s.origPage===orig).forEach(s=>{
       const f=allFixtures().find(x=>x.id===s.fixtureId);if(!f)return;
-      const dx=s.nx*vp.width,dy=s.ny*vp.height,sz=st.stampSize*2,hs=sz/2;
+      const dx=(pageFlipped?(1-s.nx):s.nx)*vp.width,dy=s.ny*vp.height,sz=st.stampSize*2,hs=sz/2;
       ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.fillStyle=f.color;ctx.globalAlpha=0.70;
       drawShapeCanvas(ctx,f.shape,dx,dy,hs,sz);
       ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.font=`700 ${Math.round(sz*.38)}px sans-serif`;
@@ -1922,6 +1951,12 @@ bindFileInput();
 document.getElementById('prevPage').onclick=async()=>{ if(st.pageIdx>0){st.pageIdx--;await renderPdfPage();} };
 document.getElementById('nextPage').onclick=async()=>{ if(st.pageIdx<st.keptPages.length-1){st.pageIdx++;await renderPdfPage();} };
 document.getElementById('zoomSel').onchange=async e=>{ st.scale=parseFloat(e.target.value);if(st.pdfDoc)await renderPdfPage(); };
+document.getElementById('flipBtn').onclick=async()=>{
+  const p=curPage(); if(!p) return;
+  const i=st.flippedPages.indexOf(p);
+  if(i===-1) st.flippedPages.push(p); else st.flippedPages.splice(i,1);
+  st.dirty=true; await renderPdfPage();
+};
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 async function applyZoom(scale) {
@@ -1956,7 +1991,7 @@ async function exitToHome() {
   }
   st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
-  st.currentLayout = null; st.customStamps = []; st.dirty = false;
+  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dirty = false;
   st.scale = 1; st.mode = 'select'; st.snaps = []; st.dragState = null;
   deactivatePlace();
   const cc = document.getElementById('canvasContainer');
