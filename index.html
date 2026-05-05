@@ -164,9 +164,13 @@
   .save-btn {
     background: var(--green); color: #fff; border: 1px solid var(--green);
     border-radius: 5px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
-    transition: all 0.12s; font-family: 'DM Sans', sans-serif;
+    transition: all 0.12s; font-family: 'DM Sans', sans-serif; flex: 1;
   }
   .save-btn:hover { background: var(--green-hover); border-color: var(--green-hover); }
+  .save-btn:disabled, .save-btn:disabled:hover { opacity: 0.35; cursor: not-allowed; background: var(--green); border-color: var(--green); }
+  .save-btn.secondary { background: transparent; color: var(--green); }
+  .save-btn.secondary:hover { background: var(--green); color: #fff; }
+  .save-btn.secondary:disabled, .save-btn.secondary:disabled:hover { opacity: 0.35; cursor: not-allowed; background: transparent; color: var(--green); }
   #saveOverlay {
     display: none; position: fixed; inset: 0; z-index: 9999;
     background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
@@ -460,8 +464,8 @@
         <input id="layoutSearch" placeholder="Search layouts…" oninput="renderLayoutList()">
         <div id="layoutList"></div>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input class="layout-input" id="layoutName" placeholder="Layout name…">
-          <button class="save-btn" id="saveLayoutBtn">Save</button>
+          <button class="save-btn" id="saveBtn" disabled>Save</button>
+          <button class="save-btn secondary" id="saveAsBtn" disabled>Save As</button>
         </div>
       </div>
     </div>
@@ -918,6 +922,7 @@ function renderLayoutList() {
     item.querySelectorAll('.layout-dd-item')[1].onclick = e => { e.stopPropagation(); deleteLayout(name); };
     el.appendChild(item);
   });
+  updateSaveBtns();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1464,7 +1469,19 @@ function showConfirm(title, body, okLabel) {
   });
 }
 
-document.getElementById('saveLayoutBtn').onclick=async()=>{ const n=document.getElementById('layoutName').value.trim();await saveLayout(n||'Layout '+(Object.keys(st.layouts).length+1));document.getElementById('layoutName').value=''; };
+document.getElementById('saveBtn').onclick = () => { if (st.currentLayout) saveLayout(st.currentLayout); };
+document.getElementById('saveAsBtn').onclick = async () => {
+  const n = prompt('Save layout as:');
+  if (!n || !n.trim()) return;
+  await saveLayout(n.trim());
+};
+
+function updateSaveBtns() {
+  const saveBtn = document.getElementById('saveBtn');
+  const saveAsBtn = document.getElementById('saveAsBtn');
+  if (saveBtn) saveBtn.disabled = !st.currentLayout;
+  if (saveAsBtn) saveAsBtn.disabled = !st.pdfDoc;
+}
 document.addEventListener('click', () => { document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open')); });
 
 // Drag and drop PDF
