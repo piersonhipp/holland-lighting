@@ -664,8 +664,8 @@ if (window.pdfjsLib) {
 // FIXTURES & STATE
 // ══════════════════════════════════════════════════════════════════════════
 const FIXTURES = [
-  { id:'vanity',  label:'Vanity',          shape:'circle',      color:'#DC2626', letter:'V' },
-  { id:'can',     label:'Can/Recessed',    shape:'circle',      color:'#EC4899', letter:'C' },
+  { id:'vanity',  label:'Vanity Light',     shape:'circle',      color:'#DC2626', letter:'V' },
+  { id:'can',     label:'Recessed Can',    shape:'circle',      color:'#EC4899', letter:'C' },
   { id:'disc',    label:'Disc',            shape:'circle',      color:'#1E3A8A', letter:'D' },
   { id:'fan',     label:'Ceiling Fan',     shape:'plus',        color:'#22C55E', letter:'F' },
   { id:'esconce', label:'Exterior Sconce', shape:'triangle',    color:'#92400E', letter:'E' },
@@ -1149,7 +1149,7 @@ function stampSVG(f, size, selected = false) {
   else if (f.shape==='plus') { const t=s*.22,o=s*.08; shape=`<path d="M${hs-t},${o} L${hs+t},${o} L${hs+t},${hs-t} L${s-o},${hs-t} L${s-o},${hs+t} L${hs+t},${hs+t} L${hs+t},${s-o} L${hs-t},${s-o} L${hs-t},${hs+t} L${o},${hs+t} L${o},${hs-t} L${hs-t},${hs-t} Z" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>` }
   else if (f.shape==='hexagon') { const r=hs-1.5,pts=Array.from({length:6},(_,i)=>{const a=(Math.PI/180)*(60*i-30);return`${hs+r*Math.cos(a)},${hs+r*Math.sin(a)}`;}).join(' '); shape=`<polygon points="${pts}" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`; }
   const fs = Math.max(7, Math.round(s*.38));
-  const textY = f.shape === 'triangle' ? Math.round(s * 0.62) : hs;
+  const textY = f.shape === 'triangle' ? Math.round(s * 0.70) : hs;
   return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="${glow}" xmlns="http://www.w3.org/2000/svg">
     ${shape}
     <text x="${hs}" y="${textY}" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${f.letter}</text>
