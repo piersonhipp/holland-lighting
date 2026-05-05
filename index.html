@@ -870,7 +870,7 @@ function renderFixtureList() {
       <span class="swatch">${stampSVG(f,20)}</span>
       <span class="fx-label">${f.label}</span>
       <span class="fx-count${count?'':' zero'}">${count||'—'}</span>
-      <button class="place-btn${placing?' active':''}" title="Place ${f.label}">✏</button>
+      <button class="place-btn${placing?' active':''}" title="Place ${f.label}">➕</button>
     `;
     row.querySelector('.place-btn').addEventListener('click', e => {
       e.stopPropagation();
@@ -896,7 +896,7 @@ function renderCustomList() {
       <span class="swatch">${stampSVG(cs,20)}</span>
       <span class="fx-label" style="font-size:12px">${cs.label}</span>
       <span class="fx-count${count?'':' zero'}" style="font-size:12px">${count||'—'}</span>
-      <button class="place-btn${placing?' active':''}" title="Place">✏</button>
+      <button class="place-btn${placing?' active':''}" title="Place">➕</button>
       <button class="place-btn" title="Delete" style="color:#f87171">×</button>
     `;
     const btns = row.querySelectorAll('.place-btn');
@@ -929,7 +929,7 @@ function renderLayoutList() {
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
       <button class="layout-menu-btn" title="Options">⋯</button>
       <div class="layout-dropdown">
-        <div class="layout-dd-item">✏ Rename</div>
+        <div class="layout-dd-item">➕ Rename</div>
         <div class="layout-dd-item">📋 Duplicate</div>
         <div class="layout-dd-item danger">🗑 Delete</div>
       </div>`;
