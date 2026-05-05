@@ -270,15 +270,7 @@
   .tool-number:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); }
   .tool-select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); outline: none; }
   .dlg-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); }
-  .tool-btn.flipped, .tool-btn.focus-active, .tool-btn.divider-active { background: rgba(37,99,235,0.25); color: var(--blue-hover); border-color: var(--blue); }
-  #zoneTabs { display: none; flex-wrap: wrap; gap: 3px; margin-bottom: 6px; }
-  .zone-tab {
-    background: var(--navy-dark); color: var(--text-muted); border: 1px solid var(--border-light);
-    border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
-    transition: all 0.12s; font-family: 'DM Sans', sans-serif;
-  }
-  .zone-tab:hover { background: rgba(37,99,235,0.18); color: var(--blue-hover); }
-  .zone-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .tool-btn.flipped, .tool-btn.divider-active { background: rgba(37,99,235,0.25); color: var(--blue-hover); border-color: var(--blue); }
   #canvasWrap {
     flex: 1; overflow: auto; background: #b8c4d4; position: relative;
     display: flex; align-items: flex-start; padding: 20px;
@@ -505,7 +497,6 @@
     <div id="sidebar">
       <div id="sidebarTop">
       <div class="section-label">Fixtures</div>
-      <div id="zoneTabs"></div>
       <div id="fixtureList"></div>
       <div id="sidebarSpacer"></div>
       <div id="customSection">
@@ -547,12 +538,9 @@
         <button class="tool-btn" id="prevPage" disabled>‹</button>
         <button class="tool-btn" id="nextPage" disabled>›</button>
         <div class="sep"></div>
-        <span class="tool-label">Zoom</span>
-        <select class="tool-select" id="zoomSel">
-          <option value="0.5">50%</option><option value="0.75">75%</option>
-          <option value="1" selected>100%</option><option value="1.25">125%</option>
-          <option value="1.5">150%</option><option value="2">200%</option>
-        </select>
+        <button class="tool-btn" id="zoomOutBtn" title="Zoom out (Ctrl+−)">−</button>
+        <span id="zoomDisplay" style="min-width:40px;text-align:center;font-size:12px;font-weight:600;color:var(--text-dim);cursor:default">100%</span>
+        <button class="tool-btn" id="zoomInBtn" title="Zoom in (Ctrl++)">+</button>
         <div class="sep"></div>
         <span class="tool-label">Size</span>
         <input type="number" class="tool-number" id="stampSizeInput" min="8" max="80" value="24">
@@ -561,8 +549,6 @@
         <button class="tool-btn" id="pasteStampsBtn" disabled title="Paste stamps onto current page (Ctrl+V)">⎘ Paste</button>
         <div class="sep"></div>
         <button class="tool-btn" id="flipBtn" title="Flip current page horizontally">⇄ Flip</button>
-        <div class="sep"></div>
-        <button class="tool-btn" id="focusBtn" title="Draw a focus area — grays out the rest of the page">⊡ Focus Area</button>
         <div class="sep"></div>
         <button class="tool-btn" id="dividerBtn" title="Click to place vertical unit dividers; click near a line to remove it">⊟ Dividers</button>
       </div>
@@ -873,7 +859,7 @@ const CATALOG = [
 let st = {
   user: null, isAdmin: false,
   pdfDoc: null, pdfBuffer: null, pdfName: '', pdfPath: null,
-  keptPages: [], pageIdx: 0, scale: 1, stampSize: 24,
+  keptPages: [], pageIdx: 0, scale: 1, zoomPct: 100, stampSize: 24,
   stamps: [], selectedIds: new Set(),
   mode: 'select', activeFixture: FIXTURES[0].id,
   dragState: null,
@@ -882,10 +868,9 @@ let st = {
   layouts: {}, currentLayout: null,
   clipboard: [],
   flippedPages: [],
-  focusBox: null,
   dividers: [],
   zoneNames: [],
-  activeZone: -1,
+  pagePositions: {},
   dirty: false,
 };
 function curPage() { return st.keptPages[st.pageIdx]; }
@@ -979,9 +964,9 @@ async function saveLayout(name) {
     stampSize: st.stampSize,
     customStamps: JSON.parse(JSON.stringify(st.customStamps)),
     flippedPages: [...st.flippedPages],
-    focusBox: st.focusBox ? {...st.focusBox} : null,
     dividers: [...st.dividers],
     zoneNames: [...st.zoneNames],
+    pagePositions: JSON.parse(JSON.stringify(st.pagePositions)),
   };
 
   // Upload PDF if we have one (best-effort — layout saves even if upload fails)
@@ -1105,22 +1090,20 @@ async function openLayout(name) {
     st.stampSize = layout.stampSize || 24;
     st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
     st.flippedPages = layout.flippedPages ? [...layout.flippedPages] : [];
-    st.focusBox = layout.focusBox || null;
     st.dividers = layout.dividers ? [...layout.dividers] : [];
     st.zoneNames = layout.zoneNames ? [...layout.zoneNames] : [];
+    st.pagePositions = layout.pagePositions ? JSON.parse(JSON.stringify(layout.pagePositions)) : {};
     syncZoneNames();
-    st.activeZone = -1;
     st.currentLayout = name;
     st.dirty = false;
     st.pageIdx = 0;
+    st.zoomPct = 100;
     st.selectedIds.clear();
     document.getElementById('stampSizeInput').value = st.stampSize;
     renderFixtureList();
     renderCustomList();
     renderLayoutList();
     renderLegend();
-    renderFocusBox();
-    renderZoneTabs();
   }
 
   // If same PDF is already loaded, just apply stamps
@@ -1185,7 +1168,7 @@ function renderFixtureList() {
   const el = document.getElementById('fixtureList');
   if (!el) return;
   const counts = {};
-  st.stamps.filter(s => st.activeZone < 0 || !st.dividers.length || getStampZone(s) === st.activeZone)
+  st.stamps
     .forEach(s => { counts[s.fixtureId] = (counts[s.fixtureId]||0)+1; });
   el.innerHTML = '';
   allFixtures().forEach(f => {
@@ -1207,14 +1190,14 @@ function renderFixtureList() {
     el.appendChild(row);
   });
 }
-function renderLegend() { renderFixtureList(); renderZoneTabs(); }
+function renderLegend() { renderFixtureList(); }
 
 function renderCustomList() {
   const el = document.getElementById('customList');
   if (!el) return;
   el.innerHTML = '';
   const counts = {};
-  st.stamps.filter(s => st.activeZone < 0 || !st.dividers.length || getStampZone(s) === st.activeZone)
+  st.stamps
     .forEach(s => { counts[s.fixtureId]=(counts[s.fixtureId]||0)+1; });
   st.customStamps.forEach(cs => {
     const placing = st.mode==='place' && st.activeFixture===cs.id;
@@ -1391,14 +1374,12 @@ function ensureCanvas() {
   if (es) es.style.display = 'none';
   const container = document.createElement('div'); container.id='canvasContainer';
   const pdfCv = document.createElement('canvas'); pdfCv.id='pdfCanvas'; pdfCv.style.cursor='default';
-  const fl = document.createElementNS('http://www.w3.org/2000/svg','svg'); fl.id='focusLayer';
-  fl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
   const dl = document.createElementNS('http://www.w3.org/2000/svg','svg'); dl.id='dividerLayer';
   dl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
   const sl = document.createElement('div'); sl.id='stampLayer';
   const gl = document.createElementNS('http://www.w3.org/2000/svg','svg'); gl.id='guideLayer';
   gl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;';
-  container.appendChild(pdfCv); container.appendChild(fl); container.appendChild(dl); container.appendChild(sl); container.appendChild(gl);
+  container.appendChild(pdfCv); container.appendChild(dl); container.appendChild(sl); container.appendChild(gl);
   wrap.appendChild(container);
   bindCanvasEvents(pdfCv, sl, container);
 }
@@ -1407,6 +1388,12 @@ async function renderPdfPage() {
   const orig = curPage(); if (!orig || !st.pdfDoc) return;
   ensureCanvas();
   const page = await st.pdfDoc.getPage(orig);
+  const nativeVp = page.getViewport({ scale: 1 });
+  const wrap = document.getElementById('canvasWrap');
+  const availW = wrap.clientWidth - 40, availH = wrap.clientHeight - 40;
+  const fitScale = Math.min(availW / nativeVp.width, availH / nativeVp.height);
+  st.scale = fitScale * st.zoomPct / 100;
+  document.getElementById('zoomDisplay').textContent = st.zoomPct + '%';
   const vp = page.getViewport({scale: st.scale});
   const cv = document.getElementById('pdfCanvas');
   const container = document.getElementById('canvasContainer');
@@ -1428,7 +1415,6 @@ async function renderPdfPage() {
   document.getElementById('nextPage').disabled=st.pageIdx>=st.keptPages.length-1;
   document.getElementById('flipBtn').classList.toggle('flipped', isFlipped());
   renderStamps();
-  renderFocusBox();
   renderDividers();
 }
 
@@ -1478,30 +1464,17 @@ function renderStamps() {
 // ══════════════════════════════════════════════════════════════════════════
 // FOCUS BOX
 // ══════════════════════════════════════════════════════════════════════════
-function renderFocusBox() {
-  const layer = document.getElementById('focusLayer'); if (!layer) return;
-  const cv = document.getElementById('pdfCanvas'); if (!cv) return;
-  const W = cv.offsetWidth, H = cv.offsetHeight;
-  layer.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  layer.setAttribute('width', W); layer.setAttribute('height', H);
-  const btn = document.getElementById('focusBtn');
-  if (!st.focusBox) {
-    layer.innerHTML = '';
-    if (btn) btn.classList.remove('focus-active');
-    return;
-  }
-  const {nx1,ny1,nx2,ny2} = st.focusBox;
-  const x1=nx1*W, y1=ny1*H, x2=nx2*W, y2=ny2*H;
-  layer.innerHTML = `
-    <path d="M0,0 H${W} V${H} H0 Z M${x1},${y1} H${x2} V${y2} H${x1} Z" fill="rgba(0,0,0,0.5)" fill-rule="evenodd"/>
-    <rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-dasharray="8 4"/>
-  `;
-  if (btn) btn.classList.add('focus-active');
-}
-
 // ══════════════════════════════════════════════════════════════════════════
 // DIVIDERS / ZONES
 // ══════════════════════════════════════════════════════════════════════════
+function activeDividers() {
+  const p = curPage();
+  return (p != null && st.pagePositions[p]) ? st.pagePositions[p] : st.dividers;
+}
+function getDividersForPage(page) {
+  return st.pagePositions[page] ? st.pagePositions[page] : st.dividers;
+}
+
 function syncZoneNames() {
   const needed = st.dividers.length + 1;
   while (st.zoneNames.length < needed) st.zoneNames.push(`Unit ${st.zoneNames.length + 1}`);
@@ -1509,7 +1482,8 @@ function syncZoneNames() {
 }
 
 function getStampZone(s) {
-  const sorted = [...st.dividers].sort((a,b)=>a-b);
+  const dividers = getDividersForPage(s.origPage);
+  const sorted = [...dividers].sort((a,b)=>a-b);
   let z = 0;
   for (const d of sorted) { if (s.nx > d) z++; else break; }
   return z;
@@ -1521,8 +1495,9 @@ function renderDividers() {
   const W = cv.offsetWidth, H = cv.offsetHeight;
   layer.setAttribute('viewBox', `0 0 ${W} ${H}`);
   layer.setAttribute('width', W); layer.setAttribute('height', H);
-  if (!st.dividers.length) { layer.innerHTML = ''; return; }
-  const sorted = [...st.dividers].sort((a,b)=>a-b);
+  const dividers = activeDividers();
+  if (!dividers.length) { layer.innerHTML = ''; return; }
+  const sorted = [...dividers].sort((a,b)=>a-b);
   const bounds = [0, ...sorted, 1];
   let html = '';
   sorted.forEach(nx => {
@@ -1533,53 +1508,21 @@ function renderDividers() {
     const cx = (bounds[i] + bounds[i+1]) / 2 * W;
     const label = st.zoneNames[i] || `Unit ${i+1}`;
     const tw = label.length * 7 + 12;
-    html += `<rect x="${cx-tw/2}" y="6" width="${tw}" height="18" rx="4" fill="rgba(0,0,0,0.6)"/>`;
-    html += `<text x="${cx}" y="19" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#f59e0b">${label}</text>`;
+    html += `<rect class="zone-label" data-zone="${i}" x="${cx-tw/2}" y="6" width="${tw}" height="18" rx="4" fill="rgba(0,0,0,0.6)" cursor="pointer" pointer-events="all" title="Click to rename"/>`;
+    html += `<text x="${cx}" y="19" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#f59e0b" pointer-events="none">${label}</text>`;
   }
   layer.innerHTML = html;
-}
-
-function renderZoneTabs() {
-  const el = document.getElementById('zoneTabs'); if (!el) return;
-  if (!st.dividers.length) { el.style.display = 'none'; return; }
-  syncZoneNames();
-  el.style.display = 'flex';
-  el.innerHTML = '';
-
-  // "All" tab
-  const allBtn = document.createElement('button');
-  allBtn.className = 'zone-tab' + (st.activeZone === -1 ? ' active' : '');
-  allBtn.dataset.zone = '-1';
-  allBtn.textContent = 'All';
-  allBtn.onclick = () => { st.activeZone = -1; renderZoneTabs(); renderFixtureList(); renderCustomList(); };
-  el.appendChild(allBtn);
-
-  st.zoneNames.forEach((name, i) => {
-    const wrap = document.createElement('span');
-    wrap.style.cssText = 'position:relative;display:inline-flex;align-items:center;';
-    const btn = document.createElement('button');
-    btn.className = 'zone-tab' + (st.activeZone === i ? ' active' : '');
-    btn.dataset.zone = i;
-    btn.textContent = name;
-    btn.onclick = () => { st.activeZone = i; renderZoneTabs(); renderFixtureList(); renderCustomList(); };
-    const edit = document.createElement('span');
-    edit.textContent = '✎';
-    edit.title = 'Rename';
-    edit.style.cssText = 'font-size:10px;cursor:pointer;margin-left:2px;color:var(--text-muted);opacity:0;transition:opacity 0.15s;';
-    wrap.addEventListener('mouseenter', () => edit.style.opacity = '1');
-    wrap.addEventListener('mouseleave', () => edit.style.opacity = '0');
-    edit.onclick = (e) => {
+  layer.querySelectorAll('.zone-label').forEach(el => {
+    el.addEventListener('click', e => {
       e.stopPropagation();
-      const val = prompt('Zone name:', st.zoneNames[i]);
+      const i = parseInt(el.dataset.zone);
+      const val = prompt('Zone name:', st.zoneNames[i] || `Unit ${i+1}`);
       if (val && val.trim()) {
         st.zoneNames[i] = val.trim();
         st.dirty = true;
-        renderZoneTabs(); renderDividers(); renderFixtureList(); renderCustomList();
+        renderDividers(); renderFixtureList(); renderCustomList();
       }
-    };
-    wrap.appendChild(btn);
-    wrap.appendChild(edit);
-    el.appendChild(wrap);
+    });
   });
 }
 
@@ -1690,22 +1633,30 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     const r = pdfCv.getBoundingClientRect();
     const nx = (e.clientX - r.left) / r.width;
     const HIT = 14 / r.width;
-    const existing = st.dividers.findIndex(d => Math.abs(d - nx) < HIT);
+    const existing = activeDividers().findIndex(d => Math.abs(d - nx) < HIT);
     if (existing >= 0) {
       draggingDividerIdx = existing;
     } else {
+      // Adding a divider: insert into global list AND all per-page position lists
       const insertAt = st.dividers.filter(d => d < nx).length;
       st.dividers.splice(insertAt, 0, nx);
+      for (const p of st.keptPages) {
+        if (st.pagePositions[p]) st.pagePositions[p].splice(insertAt, 0, nx);
+      }
       st.zoneNames.splice(insertAt + 1, 0, `Unit ${st.zoneNames.length + 1}`);
       draggingDividerIdx = insertAt;
-      renderDividers(); renderZoneTabs(); renderFixtureList(); renderCustomList();
+      renderDividers(); renderFixtureList(); renderCustomList();
     }
     pdfCv.setPointerCapture(e.pointerId);
   });
   pdfCv.addEventListener('pointermove', e => {
     if (draggingDividerIdx < 0 || st.mode !== 'divider') return;
     const r = pdfCv.getBoundingClientRect();
-    st.dividers[draggingDividerIdx] = (e.clientX - r.left) / r.width;
+    const p = curPage();
+    // Auto-create per-page positions for this page on first drag
+    if (p != null && !st.pagePositions[p]) st.pagePositions[p] = [...st.dividers];
+    if (p != null) st.pagePositions[p][draggingDividerIdx] = (e.clientX - r.left) / r.width;
+    else st.dividers[draggingDividerIdx] = (e.clientX - r.left) / r.width;
     renderDividers();
   });
   pdfCv.addEventListener('pointerup', e => {
@@ -1713,53 +1664,18 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     const r = pdfCv.getBoundingClientRect();
     const nx = (e.clientX - r.left) / r.width;
     if (nx < 0.01 || nx > 0.99) {
-      // dragged off edge → delete, keep left zone's name
+      // Removing a divider: remove from global AND all per-page lists
       st.zoneNames.splice(draggingDividerIdx + 1, 1);
       st.dividers.splice(draggingDividerIdx, 1);
-      if (st.activeZone >= st.dividers.length + 1) st.activeZone = -1;
+      for (const p of st.keptPages) {
+        if (st.pagePositions[p]) st.pagePositions[p].splice(draggingDividerIdx, 1);
+      }
     }
     draggingDividerIdx = -1;
     st.dirty = true;
-    renderDividers(); renderZoneTabs(); renderFixtureList(); renderCustomList();
+    renderDividers(); renderFixtureList(); renderCustomList();
   });
 
-  // Focus box drawing
-  let focusDrawing=false, focusStart=null;
-  pdfCv.addEventListener('pointerdown',e=>{
-    if(st.mode!=='focus') return;
-    e.preventDefault(); e.stopPropagation();
-    const r=pdfCv.getBoundingClientRect();
-    focusDrawing=true;
-    focusStart={nx:(e.clientX-r.left)/r.width, ny:(e.clientY-r.top)/r.height};
-    pdfCv.setPointerCapture(e.pointerId);
-  });
-  pdfCv.addEventListener('pointermove',e=>{
-    if(!focusDrawing) return;
-    const r=pdfCv.getBoundingClientRect();
-    const cur={nx:(e.clientX-r.left)/r.width, ny:(e.clientY-r.top)/r.height};
-    const layer=document.getElementById('focusLayer'); if(!layer) return;
-    const W=r.width, H=r.height;
-    layer.setAttribute('viewBox',`0 0 ${W} ${H}`);
-    layer.setAttribute('width',W); layer.setAttribute('height',H);
-    const x1=Math.min(focusStart.nx,cur.nx)*W, y1=Math.min(focusStart.ny,cur.ny)*H;
-    const x2=Math.max(focusStart.nx,cur.nx)*W, y2=Math.max(focusStart.ny,cur.ny)*H;
-    layer.innerHTML=`
-      <path d="M0,0 H${W} V${H} H0 Z M${x1},${y1} H${x2} V${y2} H${x1} Z" fill="rgba(0,0,0,0.5)" fill-rule="evenodd"/>
-      <rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-dasharray="8 4"/>
-    `;
-  });
-  pdfCv.addEventListener('pointerup',e=>{
-    if(!focusDrawing) return;
-    focusDrawing=false;
-    const r=pdfCv.getBoundingClientRect();
-    const cur={nx:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)), ny:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
-    const nx1=Math.min(focusStart.nx,cur.nx), ny1=Math.min(focusStart.ny,cur.ny);
-    const nx2=Math.max(focusStart.nx,cur.nx), ny2=Math.max(focusStart.ny,cur.ny);
-    if((nx2-nx1)>0.02&&(ny2-ny1)>0.02){ st.focusBox={nx1,ny1,nx2,ny2}; st.dirty=true; }
-    st.mode='select'; pdfCv.style.cursor='default';
-    document.getElementById('stampLayer').style.pointerEvents='all';
-    renderFocusBox();
-  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1809,12 +1725,6 @@ document.addEventListener('keydown',e=>{
       const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='default';
       const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='all';
       document.getElementById('dividerBtn').classList.remove('divider-active'); return;
-    }
-    if(st.mode==='focus'){
-      st.mode='select';
-      const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='default';
-      const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='all';
-      renderFocusBox(); return;
     }
     if(st.mode==='place'){deactivatePlace();return;}
     if(st.snaps.length){hideGuide();return;}
@@ -1921,9 +1831,11 @@ async function exportPDF() {
       ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(f.letter,dx,dy);
       ctx.restore();
     });
-    // Draw dividers on the floor plan page
-    if(st.dividers.length){
-      const sorted=[...st.dividers].sort((a,b)=>a-b);
+    // Draw dividers on the floor plan page (use per-page override if present)
+    const pageDividers = getDividersForPage(orig);
+    const pageZoneNames = st.zoneNames;
+    if(pageDividers.length){
+      const sorted=[...pageDividers].sort((a,b)=>a-b);
       const bounds=[0,...sorted,1];
       ctx.save();
       sorted.forEach(nx=>{
@@ -1936,7 +1848,7 @@ async function exportPDF() {
       ctx.font=`700 ${fs}px sans-serif`;
       for(let z=0;z<bounds.length-1;z++){
         const cx=(bounds[z]+bounds[z+1])/2*vp.width;
-        const label=st.zoneNames[z]||`Unit ${z+1}`;
+        const label=pageZoneNames[z]||`Unit ${z+1}`;
         const tw=ctx.measureText(label).width;
         ctx.fillStyle='rgba(0,0,0,0.65)';
         ctx.beginPath();ctx.roundRect(cx-tw/2-10,10,tw+20,fs+12,5);ctx.fill();
@@ -2208,7 +2120,6 @@ bindFileInput();
 
 document.getElementById('prevPage').onclick=async()=>{ if(st.pageIdx>0){st.pageIdx--;await renderPdfPage();} };
 document.getElementById('nextPage').onclick=async()=>{ if(st.pageIdx<st.keptPages.length-1){st.pageIdx++;await renderPdfPage();} };
-document.getElementById('zoomSel').onchange=async e=>{ st.scale=parseFloat(e.target.value);if(st.pdfDoc)await renderPdfPage(); };
 document.getElementById('flipBtn').onclick=async()=>{
   const p=curPage(); if(!p) return;
   const i=st.flippedPages.indexOf(p);
@@ -2224,45 +2135,21 @@ document.getElementById('dividerBtn').onclick=()=>{
   } else {
     if(!st.pdfDoc) return;
     deactivatePlace();
-    if(st.mode==='focus'){
-      const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='all';
-      document.getElementById('focusBtn').classList.remove('focus-active');
-    }
     st.mode='divider';
     const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='col-resize';
     const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='none';
     document.getElementById('dividerBtn').classList.add('divider-active');
   }
 };
-document.getElementById('focusBtn').onclick=()=>{
-  if(st.mode==='focus'){
-    // cancel drawing in progress
-    st.mode='select';
-    const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='default';
-    const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='all';
-    renderFocusBox(); return;
-  }
-  if(st.focusBox){
-    // clear existing box
-    st.focusBox=null; st.dirty=true; renderFocusBox(); return;
-  }
-  if(!st.pdfDoc) return;
-  deactivatePlace();
-  st.mode='focus';
-  const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='crosshair';
-  const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='none';
-  document.getElementById('focusBtn').classList.add('focus-active');
-};
-
-const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-async function applyZoom(scale) {
-  st.scale = scale;
-  const sel = document.getElementById('zoomSel');
-  sel.value = scale;
-  if (st.pdfDoc) await renderPdfPage();
+function applyZoomPct(pct) {
+  st.zoomPct = Math.max(10, Math.min(500, Math.round(pct / 10) * 10));
+  if (st.pdfDoc) renderPdfPage();
 }
-function zoomIn()  { const i = ZOOM_LEVELS.indexOf(st.scale); if (i < ZOOM_LEVELS.length-1) applyZoom(ZOOM_LEVELS[i+1]); }
-function zoomOut() { const i = ZOOM_LEVELS.indexOf(st.scale); if (i > 0) applyZoom(ZOOM_LEVELS[i-1]); }
+function zoomIn()  { applyZoomPct(st.zoomPct + 10); }
+function zoomOut() { applyZoomPct(st.zoomPct - 10); }
+
+document.getElementById('zoomInBtn').onclick  = () => zoomIn();
+document.getElementById('zoomOutBtn').onclick = () => zoomOut();
 
 document.getElementById('canvasWrap').addEventListener('wheel', e => {
   if (!e.ctrlKey) return;
@@ -2274,7 +2161,7 @@ document.addEventListener('keydown', e => {
   if (!e.ctrlKey) return;
   if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn(); }
   else if (e.key === '-')             { e.preventDefault(); zoomOut(); }
-  else if (e.key === '0')             { e.preventDefault(); applyZoom(1); }
+  else if (e.key === '0')             { e.preventDefault(); applyZoomPct(100); }
 });
 document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.target.value);if(v>=8&&v<=80){st.stampSize=v;st.dirty=true;renderStamps();renderLegend();} };
 async function exitToHome() {
@@ -2287,8 +2174,8 @@ async function exitToHome() {
   }
   st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
-  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.focusBox = null; st.dividers = []; st.zoneNames = []; st.activeZone = -1; st.dirty = false;
-  st.scale = 1; st.mode = 'select'; st.snaps = []; st.dragState = null;
+  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dividers = []; st.zoneNames = []; st.pagePositions = {}; st.dirty = false;
+  st.scale = 1; st.zoomPct = 100; st.mode = 'select'; st.snaps = []; st.dragState = null;
   deactivatePlace();
   const cc = document.getElementById('canvasContainer');
   if (cc) cc.remove();
@@ -2297,7 +2184,7 @@ async function exitToHome() {
   document.getElementById('pageInfo').textContent = 'No PDF loaded';
   document.getElementById('prevPage').disabled = true;
   document.getElementById('nextPage').disabled = true;
-  document.getElementById('zoomSel').value = '1';
+  document.getElementById('zoomDisplay').textContent = '100%';
   document.getElementById('stampSizeInput').value = 24;
   document.getElementById('exitBtn').style.display = 'none';
   renderFixtureList(); renderCustomList(); renderLayoutList(); renderLegend();
