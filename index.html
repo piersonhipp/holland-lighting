@@ -1384,8 +1384,14 @@ function ensureCanvas() {
   bindCanvasEvents(pdfCv, sl, container);
 }
 
+let _renderTask = null;
+
 async function renderPdfPage() {
   const orig = curPage(); if (!orig || !st.pdfDoc) return;
+
+  // Cancel any in-progress render so we never draw on top of a partial transform
+  if (_renderTask) { _renderTask.cancel(); _renderTask = null; }
+
   ensureCanvas();
   const page = await st.pdfDoc.getPage(orig);
   const nativeVp = page.getViewport({ scale: 1 });
@@ -1400,7 +1406,17 @@ async function renderPdfPage() {
   cv.width=vp.width; cv.height=vp.height;
   container.style.width=vp.width+'px'; container.style.height=vp.height+'px';
   const ctx = cv.getContext('2d');
-  await page.render({canvasContext:ctx,viewport:vp}).promise;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  _renderTask = page.render({canvasContext: ctx, viewport: vp});
+  try {
+    await _renderTask.promise;
+  } catch (e) {
+    if (e?.name === 'RenderingCancelledException') return;
+    throw e;
+  }
+  _renderTask = null;
+
   if (isFlipped()) {
     const tmp = document.createElement('canvas');
     tmp.width=cv.width; tmp.height=cv.height;
