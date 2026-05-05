@@ -1449,8 +1449,8 @@ async function renderPdfPage() {
   try {
     await _renderTask.promise;
   } catch (e) {
-    if (spinner) spinner.style.display = 'none';
     if (e?.name === 'RenderingCancelledException') return;
+    if (spinner) spinner.style.display = 'none';
     throw e;
   }
   _renderTask = null;
