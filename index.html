@@ -942,6 +942,7 @@ function pushHistory() {
   updateUndoRedoBtns();
 }
 function applySnapshot(snap) {
+  const curFlipped = isFlipped();
   st.stamps = JSON.parse(JSON.stringify(snap.stamps));
   st.dividers = [...snap.dividers];
   st.zoneNames = [...snap.zoneNames];
@@ -949,7 +950,12 @@ function applySnapshot(snap) {
   st.flippedPages = [...snap.flippedPages];
   st.selectedIds.clear();
   st.dirty = true;
-  renderPdfPage();
+  if (isFlipped() !== curFlipped) {
+    renderPdfPage();
+  } else {
+    renderStamps();
+    renderDividers();
+  }
   renderFixtureList();
   renderCustomList();
   renderLegend();
