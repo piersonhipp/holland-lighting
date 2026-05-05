@@ -1213,7 +1213,7 @@ async function openLayout(name) {
   }
 
   // If same PDF is already loaded, just apply stamps
-  if (st.pdfDoc && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); initHistory(); return; }
+  if (st.pdfDoc && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); initHistory(); prerenderPages(); return; }
 
   // Try loading PDF from Supabase storage
   if (layout.pdf_path) {
@@ -1229,6 +1229,7 @@ async function openLayout(name) {
       ensureCanvas();
       renderPdfPage();
       initHistory();
+      prerenderPages();
       return;
     }
   }
@@ -1238,7 +1239,7 @@ async function openLayout(name) {
   document.getElementById('fileInput').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     await handleFileUpload(file);
-    apply(); ensureCanvas(); renderPdfPage(); initHistory();
+    apply(); ensureCanvas(); renderPdfPage(); initHistory(); prerenderPages();
     bindFileInput();
     e.target.value = '';
   };
@@ -1396,6 +1397,7 @@ function deactivatePlace() {
 async function handleFileUpload(file) {
   st.pdfName = file.name.replace(/\.pdf$/i,'');
   st.pdfPath = null;
+  if (_prerenderAbort) _prerenderAbort.cancelled = true;
   _pageCache = {};
   const buf = await file.arrayBuffer();
   st.pdfBuffer = buf.slice(0);
@@ -1415,7 +1417,7 @@ function bindFileInput() {
     e.target.value = '';
     if (!kept || !kept.length) return;
     st.keptPages = kept; st.pageIdx = 0;
-    ensureCanvas(); renderPdfPage(); initHistory();
+    ensureCanvas(); renderPdfPage(); initHistory(); prerenderPages();
     renderFixtureList(); renderCustomList(); renderLayoutList();
   };
 }
@@ -1495,6 +1497,7 @@ function ensureCanvas() {
 
 let _renderTask = null;
 let _pageCache = {}; // key: `${origPage}_${flipped}` → offscreen canvas at CACHE_SCALE
+let _prerenderAbort = null;
 
 const CACHE_SCALE = 2;
 
@@ -1562,6 +1565,39 @@ async function renderPdfPage() {
   document.getElementById('flipBtn').classList.toggle('flipped', flipped);
   renderStamps();
   renderDividers();
+}
+
+async function prerenderPages() {
+  if (_prerenderAbort) _prerenderAbort.cancelled = true;
+  const ctrl = { cancelled: false };
+  _prerenderAbort = ctrl;
+
+  const currentOrig = curPage();
+  for (const orig of st.keptPages) {
+    if (ctrl.cancelled) return;
+    if (orig === currentOrig) continue;
+    const flipped = st.flippedPages.includes(orig);
+    const cacheKey = `${orig}_${flipped}`;
+    if (_pageCache[cacheKey]) continue;
+    await new Promise(r => setTimeout(r, 0));
+    if (ctrl.cancelled) return;
+    try {
+      const page = await st.pdfDoc.getPage(orig);
+      const cacheVp = page.getViewport({ scale: CACHE_SCALE });
+      const offscreen = Object.assign(document.createElement('canvas'), { width: cacheVp.width, height: cacheVp.height });
+      const task = page.render({ canvasContext: offscreen.getContext('2d'), viewport: cacheVp });
+      await task.promise;
+      if (ctrl.cancelled) return;
+      if (flipped) {
+        const tmp = Object.assign(document.createElement('canvas'), { width: cacheVp.width, height: cacheVp.height });
+        const tc = tmp.getContext('2d');
+        tc.save(); tc.translate(cacheVp.width, 0); tc.scale(-1, 1); tc.drawImage(offscreen, 0, 0); tc.restore();
+        _pageCache[cacheKey] = tmp;
+      } else {
+        _pageCache[cacheKey] = offscreen;
+      }
+    } catch (e) { /* cancelled or errored — skip this page */ }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -2356,6 +2392,7 @@ async function exitToHome() {
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
   st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dividers = []; st.zoneNames = []; st.pagePositions = {}; st.dirty = false;
   st.scale = 1; st.zoomPct = 100; st.mode = 'select'; st.snaps = []; st.dragState = null;
+  if (_prerenderAbort) _prerenderAbort.cancelled = true;
   _pageCache = {};
   clearHistory();
   deactivatePlace();
@@ -2473,7 +2510,7 @@ canvasWrap.addEventListener('drop', async e => {
   const kept = await showPagePicker(st.pdfDoc);
   if (!kept || !kept.length) return;
   st.keptPages = kept; st.pageIdx = 0;
-  ensureCanvas(); renderPdfPage(); initHistory();
+  ensureCanvas(); renderPdfPage(); initHistory(); prerenderPages();
 });
 // ── SIDEBAR RESIZE ──────────────────────────────────────────────────────────
 (function() {
