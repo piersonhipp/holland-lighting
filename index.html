@@ -1854,20 +1854,37 @@ async function exportPDF() {
   if(!exportName || !exportName.trim()) return;
   let jsPDF; try{jsPDF=await loadJsPDF();}catch(e){return alert('Could not load jsPDF: '+e.message);}
 
-  const doc=new jsPDF({orientation:'p',unit:'mm',format:'letter'});
+  // Use the first plan page's dimensions for ALL pages so nothing looks tiny
+  const _refPage = await st.pdfDoc.getPage(st.keptPages[0]);
+  const _refVp = _refPage.getViewport({scale:2});
+  const pageW = _refVp.width * 0.264583;   // px → mm
+  const pageH = _refVp.height * 0.264583;
+  const pageOrient = pageW > pageH ? 'l' : 'p';
+
+  const doc=new jsPDF({orientation:pageOrient,unit:'mm',format:[pageW,pageH]});
   const subtitle = st.pdfName || 'Unnamed Plan';
+
+  // Fit the legend canvas (portrait 2200×2850) centred inside the plan page
+  function _placeLegend(cv) {
+    const lcRatio = 2200/2850;
+    const pad = Math.min(pageW,pageH)*0.04;
+    const aW=pageW-pad*2, aH=pageH-pad*2;
+    let iW,iH;
+    if(aW/aH < lcRatio){iW=aW;iH=aW/lcRatio;}else{iH=aH;iW=aH*lcRatio;}
+    doc.addImage(cv.toDataURL('image/png'),'PNG',(pageW-iW)/2,(pageH-iH)/2,iW,iH);
+  }
 
   if (st.dividers.length) {
     syncZoneNames();
     st.zoneNames.forEach((zoneName, z) => {
       const zoneStamps = st.stamps.filter(s => getStampZone(s) === z);
       const cv = makeLegendCanvas(`${zoneName} — Fixture Legend`, subtitle, zoneStamps);
-      if (z > 0) doc.addPage([216,279],'p');
-      doc.addImage(cv.toDataURL('image/png'),'PNG',0,0,216,279);
+      if (z > 0) doc.addPage([pageW,pageH],pageOrient);
+      _placeLegend(cv);
     });
   } else {
     const cv = makeLegendCanvas('Lighting Layout — Legend', subtitle, st.stamps);
-    doc.addImage(cv.toDataURL('image/png'),'PNG',0,0,216,279);
+    _placeLegend(cv);
   }
 
   const _wrap=document.getElementById('canvasWrap');
