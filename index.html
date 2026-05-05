@@ -416,11 +416,11 @@
   .status-err { font-size: 11px; color: var(--danger); padding: 4px; }
 
   /* Confirm dialog */
-  #confirmModal {
+  #confirmModal, #saveAsModal {
     display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.4);
     backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;
   }
-  #confirmModal.open { display: flex; }
+  #confirmModal.open, #saveAsModal.open { display: flex; }
   .confirm-box {
     background: var(--navy-mid); border: 1px solid var(--border); border-radius: 14px;
     padding: 32px 32px 24px; width: 380px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);
@@ -611,6 +611,19 @@
       <div class="admin-msg" id="inviteMsg"></div>
       <div class="admin-section-title" style="margin-top:16px">Team Members</div>
       <div class="user-list" id="userList"><div class="status-msg">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SAVE AS MODAL ─────────────────────────────────────────────────────── -->
+<div id="saveAsModal">
+  <div class="confirm-box">
+    <div class="confirm-title">Save Layout As</div>
+    <input class="dlg-input" id="saveAsInput" placeholder="Layout name…" maxlength="80" style="margin:12px 0 4px;width:100%">
+    <div id="saveAsError" style="font-size:12px;color:var(--danger);min-height:18px;margin-bottom:10px"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" id="saveAsCancel">Cancel</button>
+      <button class="confirm-ok" id="saveAsOk">Save</button>
     </div>
   </div>
 </div>
@@ -1975,20 +1988,63 @@ function showConfirm(title, body, okLabel) {
 }
 
 document.getElementById('saveBtn').onclick = () => { if (st.currentLayout) saveLayout(st.currentLayout); };
-document.getElementById('saveAsBtn').onclick = async () => {
-  const n = prompt('Save layout as:');
-  if (!n || !n.trim()) return;
-  const trimmed = n.trim();
-  if (st.layouts[trimmed] && trimmed !== st.currentLayout) {
-    const ok = await showConfirm(
-      'Layout already exists',
-      `A layout named "${trimmed}" already exists. Do you want to replace it?`,
-      'Replace'
-    );
-    if (!ok) return;
+document.getElementById('saveAsBtn').onclick = () => openSaveAsModal();
+
+function openSaveAsModal() {
+  const modal = document.getElementById('saveAsModal');
+  const input = document.getElementById('saveAsInput');
+  const errEl = document.getElementById('saveAsError');
+  const okBtn = document.getElementById('saveAsOk');
+  const cancelBtn = document.getElementById('saveAsCancel');
+
+  input.value = st.currentLayout || st.pdfName || '';
+  errEl.textContent = '';
+  okBtn.textContent = 'Save';
+  okBtn.style.background = '';
+  modal.classList.add('open');
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+
+  function close() {
+    modal.classList.remove('open');
+    okBtn.onclick = null;
+    cancelBtn.onclick = null;
+    input.onkeydown = null;
   }
-  await saveLayout(trimmed);
-};
+
+  async function trySubmit() {
+    const trimmed = input.value.trim();
+    if (!trimmed) { errEl.textContent = 'Please enter a name.'; return; }
+
+    if (st.layouts[trimmed] && okBtn.dataset.confirming !== 'true') {
+      errEl.textContent = `"${trimmed}" already exists. Click Replace to overwrite.`;
+      okBtn.textContent = 'Replace';
+      okBtn.style.background = '#dc2626';
+      okBtn.dataset.confirming = 'true';
+      input.onkeydown = onKey;
+      return;
+    }
+
+    delete okBtn.dataset.confirming;
+    close();
+    await saveLayout(trimmed);
+  }
+
+  function onKey(e) {
+    if (e.key === 'Enter') trySubmit();
+    if (e.key === 'Escape') { close(); }
+    if (e.key !== 'Enter' && e.key !== 'Escape') {
+      // reset confirm state if user edits the name
+      errEl.textContent = '';
+      okBtn.textContent = 'Save';
+      okBtn.style.background = '';
+      delete okBtn.dataset.confirming;
+    }
+  }
+
+  okBtn.onclick = trySubmit;
+  cancelBtn.onclick = close;
+  input.onkeydown = onKey;
+}
 
 function updateSaveBtns() {
   const saveBtn = document.getElementById('saveBtn');
