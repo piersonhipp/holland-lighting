@@ -1870,6 +1870,8 @@ async function exportPDF() {
     doc.addImage(cv.toDataURL('image/png'),'PNG',0,0,216,279);
   }
 
+  const _wrap=document.getElementById('canvasWrap');
+  const _availW=_wrap.clientWidth-40, _availH=_wrap.clientHeight-40;
   for(let i=0;i<st.keptPages.length;i++){
     const orig=st.keptPages[i],page=await st.pdfDoc.getPage(orig),vp=page.getViewport({scale:2});
     const oc=document.createElement('canvas');oc.width=vp.width;oc.height=vp.height;
@@ -1882,9 +1884,11 @@ async function exportPDF() {
       ctx.clearRect(0,0,oc.width,oc.height);
       ctx.save();ctx.translate(oc.width,0);ctx.scale(-1,1);ctx.drawImage(tmp,0,0);ctx.restore();
     }
+    const _nativeVp=page.getViewport({scale:1});
+    const _fitScale=Math.min(_availW/_nativeVp.width,_availH/_nativeVp.height);
     st.stamps.filter(s=>s.origPage===orig).forEach(s=>{
       const f=allFixtures().find(x=>x.id===s.fixtureId);if(!f)return;
-      const dx=(pageFlipped?(1-s.nx):s.nx)*vp.width,dy=s.ny*vp.height,sz=st.stampSize*2,hs=sz/2;
+      const dx=(pageFlipped?(1-s.nx):s.nx)*vp.width,dy=s.ny*vp.height,sz=Math.round(st.stampSize/_fitScale*2),hs=sz/2;
       ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.fillStyle=f.color;ctx.globalAlpha=0.70;
       drawShapeCanvas(ctx,f.shape,dx,dy,hs,sz);
       ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.font=`700 ${Math.round(sz*.38)}px sans-serif`;
