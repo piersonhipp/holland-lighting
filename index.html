@@ -171,6 +171,46 @@
   .save-btn.secondary { background: transparent; color: var(--green); }
   .save-btn.secondary:hover { background: var(--green); color: #fff; }
   .save-btn.secondary:disabled, .save-btn.secondary:disabled:hover { opacity: 0.35; cursor: not-allowed; background: transparent; color: var(--green); }
+  /* ── CATALOG MODAL ── */
+  #catalogOverlay { display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.45); backdrop-filter:blur(2px); align-items:center; justify-content:center; }
+  #catalogOverlay.open { display:flex; }
+  .catalog-box { background:var(--navy); border:1px solid var(--border); border-radius:12px; width:min(820px,95vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.18); }
+  .catalog-hdr { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .catalog-hdr h2 { font-size:15px; font-weight:700; color:var(--text); margin:0; white-space:nowrap; }
+  .catalog-search { flex:1; background:var(--navy-dark); color:var(--text); border:1px solid var(--border-light); border-radius:6px; padding:6px 10px; font-size:13px; outline:none; font-family:'DM Sans',sans-serif; }
+  .catalog-close-btn { background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; padding:2px 6px; line-height:1; }
+  .catalog-body { flex:1; overflow-y:auto; }
+  .catalog-cat-hdr { display:flex; align-items:center; gap:8px; padding:8px 18px 4px; background:var(--navy); position:sticky; top:0; z-index:1; border-bottom:1px solid var(--border); margin-top:2px; }
+  .catalog-cat-name { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-dim); }
+  .catalog-model-hdr { padding:5px 18px 2px 18px; font-size:12px; font-weight:600; color:var(--text); background:var(--navy-dark); border-top:1px solid var(--border); }
+  .catalog-level { font-size:10px; color:var(--text-muted); font-weight:400; margin-left:4px; }
+  .catalog-sku-row { display:flex; align-items:center; padding:4px 18px 4px 30px; cursor:pointer; font-size:12px; color:var(--text); transition:background 0.1s; gap:10px; }
+  .catalog-sku-row:hover { background:var(--navy-dark); }
+  .catalog-sku-row.selected { background:#eff6ff; color:#1d4ed8; }
+  .catalog-sku-code { font-family:'DM Mono',monospace; font-size:11px; color:var(--text-muted); flex-shrink:0; min-width:130px; }
+  .catalog-sku-row.selected .catalog-sku-code { color:#3b82f6; }
+  .catalog-no-results { padding:40px; text-align:center; color:var(--text-muted); font-size:13px; }
+  .cat-section { margin-bottom:4px; }
+  .cat-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-dim); padding:8px 18px 4px; position:sticky; top:0; background:var(--navy); z-index:1; border-bottom:1px solid var(--border); }
+  .cat-model { padding:0 0 2px 0; }
+  .cat-model-name { font-size:12px; font-weight:600; color:var(--text); padding:5px 18px 2px 18px; background:var(--navy-dark); border-top:1px solid var(--border); }
+  .cat-skus { }
+  .cat-sku { display:flex; align-items:center; gap:10px; padding:4px 18px 4px 30px; cursor:pointer; font-size:12px; color:var(--text); transition:background 0.1s; }
+  .cat-sku:hover { background:rgba(255,255,255,0.05); }
+  .cat-sku.selected { background:rgba(59,130,246,0.18); }
+  .cat-sku-code { font-family:'DM Mono',monospace; font-size:11px; color:var(--text-muted); flex-shrink:0; min-width:130px; }
+  .cat-sku.selected .cat-sku-code { color:#60a5fa; }
+  .cat-sku-finish { font-size:12px; color:var(--text); }
+  .catalog-footer { border-top:1px solid var(--border); padding:12px 18px; flex-shrink:0; background:var(--navy-dark); border-radius:0 0 12px 12px; }
+  .catalog-sel-label { font-size:13px; font-weight:600; color:var(--text); margin-bottom:10px; }
+  .catalog-customize { display:flex; align-items:flex-end; gap:14px; margin-bottom:12px; flex-wrap:wrap; }
+  .catalog-customize label { font-size:11px; color:var(--text-muted); display:block; margin-bottom:3px; }
+  .catalog-shape-sel { background:var(--navy); border:1px solid var(--border-light); border-radius:5px; padding:4px 8px; font-size:12px; color:var(--text); outline:none; font-family:'DM Sans',sans-serif; }
+  .catalog-letter { width:34px; background:var(--navy); border:1px solid var(--border-light); border-radius:5px; padding:4px 6px; font-size:12px; color:var(--text); outline:none; text-align:center; font-family:'DM Sans',sans-serif; text-transform:uppercase; }
+  .catalog-color-row { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+  .catalog-swatch { width:18px; height:18px; border-radius:3px; cursor:pointer; border:2px solid transparent; flex-shrink:0; transition:border-color 0.1s; }
+  .catalog-swatch.active { border-color:#1d4ed8; }
+  .catalog-actions { display:flex; gap:8px; justify-content:flex-end; }
   #saveOverlay {
     display: none; position: fixed; inset: 0; z-index: 9999;
     background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
@@ -302,6 +342,7 @@
   .color-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
   .color-swatch { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
   .color-swatch.sel { border-color: #1e293b; }
+  .color-swatch.selected { border-color: #3b82f6; outline:1px solid #3b82f6; }
   .color-picker { width: 100%; height: 26px; border: 1px solid var(--border-light); border-radius: 5px; background: var(--navy-dark); cursor: pointer; margin-bottom: 8px; }
   .dlg-row { display: flex; gap: 6px; }
   .dlg-btn {
@@ -444,6 +485,7 @@
       <div id="customSection">
         <div class="section-label">Custom Stamps</div>
         <div id="customList"></div>
+        <button class="sidebar-btn" id="catalogBtn">⊕ Choose from Catalog</button>
         <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
         <div id="customDialog">
           <div class="dlg-label">Add Custom Stamp</div>
@@ -510,6 +552,31 @@
   </div>
 </div>
 
+<!-- ── CATALOG MODAL ────────────────────────────────────────────────────── -->
+<div id="catalogOverlay">
+  <div class="catalog-box">
+    <div class="catalog-hdr">
+      <h2>Fixture Catalog</h2>
+      <input class="catalog-search" id="catalogSearch" placeholder="Search fixtures, SKUs, finishes…">
+      <button class="catalog-close-btn" id="catalogCloseBtn">✕</button>
+    </div>
+    <div class="catalog-body" id="catalogBody"></div>
+    <div class="catalog-footer" id="catalogFooter" style="display:none">
+      <div class="catalog-sel-label" id="catalogSelLabel"></div>
+      <div class="catalog-customize">
+        <div id="catalogPreview"></div>
+        <div><label>Shape</label><select class="catalog-shape-sel" id="catalogShapeSel"></select></div>
+        <div><label>Color</label><div class="catalog-color-row" id="catalogColorRow"></div></div>
+        <div><label>Letter</label><input class="catalog-letter" id="catalogLetterInput" maxlength="2"></div>
+      </div>
+      <div class="catalog-actions">
+        <button class="confirm-cancel" id="catalogCancelBtn">Cancel</button>
+        <button class="hdr-btn primary" id="catalogAddBtn">Add & Place</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── ADMIN PANEL ──────────────────────────────────────────────────────── -->
 <div id="adminPanel">
   <div class="admin-box">
@@ -571,6 +638,195 @@ const FIXTURES = [
 ];
 const CUSTOM_SHAPES = ['circle','square','diamond','triangle','plus','hexagon','roundedrect'];
 const CUSTOM_COLORS = ['#EF4444','#F97316','#EAB308','#22C55E','#06B6D4','#3B82F6','#8B5CF6','#EC4899','#FFFFFF','#94A3B8'];
+
+const CATALOG = [
+  { id:'foyer', name:'Foyer Lights', shape:'diamond', color:'#F59E0B', letter:'FL', models:[
+    { name:'Malone Studio', level:1, skus:[{code:'7505401-112',finish:'Black'},{code:'7505401-115',finish:'White'},{code:'7505401-118',finish:'Grey'},{code:'7505401-127',finish:'Navy'},{code:'7505401-136',finish:'Rose'},{code:'7505401-145',finish:'Olive'}]},
+    { name:'Belton Studio', level:2, skus:[{code:'7714502-112',finish:'Black'},{code:'7714502-710',finish:'Bronze'},{code:'7714502-962',finish:'Nickel'}]},
+    { name:'Fullton Studio', level:2, skus:[{code:'7764203-05',finish:'Chrome'},{code:'7764203-112',finish:'Black'},{code:'7764203-848',finish:'Satin Brass'},{code:'7764203-962',finish:'Nickel'}]},
+    { name:'Clybourn Semi-Flush Studio', level:3, skus:[{code:'7761603-112',finish:'Black'},{code:'7761603-848',finish:'Satin Brass'}]},
+    { name:'Greenwich 5 Light Studio', level:3, skus:[{code:'3167105-112',finish:'Black'},{code:'3167105-848',finish:'Satin Brass'},{code:'3167105-962',finish:'Nickel'}]},
+    { name:'Ritz 8 Flush Mount', level:3, skus:[{code:'PCF1011AI',finish:'Aged Iron'},{code:'PCF1011GD',finish:'Gild'},{code:'PCF1011PN',finish:'Polished Nickel'}]},
+    { name:'Vector Semi-Flush Studio', level:3, skus:[{code:'7724305-05',finish:'Chrome'},{code:'7724305-112',finish:'Black'},{code:'7724305-848',finish:'Satin Brass'},{code:'7724305-962',finish:'Nickel'}]},
+    { name:'Charleston Small Studio', level:4, skus:[{code:'5191004-112',finish:'Black'},{code:'5191004-848',finish:'Satin Brass'}]},
+    { name:'Cordtlandt Studio', level:4, skus:[{code:'AF1143AI',finish:'Aged Iron'},{code:'AF1143BBS',finish:'Burnished Brass'},{code:'AF1143PN',finish:'Nickel'},{code:'AF1143RTN',finish:'Rattan'}]},
+    { name:'Geneva Flush Studio', level:4, skus:[{code:'CF1052AI',finish:'Aged Iron'},{code:'CF1052BBS',finish:'Burnished Brass'},{code:'CF1052PN',finish:'Nickel'}]},
+    { name:'Perno Semi-Flush Studio', level:5, skus:[{code:'CF1122AI',finish:'Aged Iron'},{code:'CF1122BBS',finish:'Burnished Brass'}]},
+    { name:'Thayer Semi-Flush Studio', level:5, skus:[{code:'SF350ADB',finish:'Antique Gold'},{code:'SF350PN',finish:'Nickel'},{code:'SF350SMS',finish:'Smith Steel'}]},
+    { name:'Beatrix Semi-Flush Studio', level:6, skus:[{code:'CF1134ADB',finish:'Antique Gold'},{code:'CF1134AI',finish:'Aged Iron'}]},
+    { name:'Harrow Studio', level:6, skus:[{code:'SF341BBS',finish:'Burnished Brass'},{code:'SF341ORB',finish:'Oil Rubbed Bronze'},{code:'SF341PN',finish:'Polished Nickel'}]},
+    { name:'Kelan Semi-Flush Studio', level:6, skus:[{code:'AF1173ADB',finish:'Antique Gild'},{code:'AF1173AI',finish:'Aged Iron'},{code:'AF1173TXW',finish:'White'}]},
+    { name:'Beatrix Large Lantern Studio', level:7, skus:[{code:'CC1634ADB',finish:'Antique Gold'},{code:'CC1634AI',finish:'Aged Iron'}]},
+    { name:'Callaway Signature', level:8, skus:[{code:'S 4685BZ-L/FA',finish:'Bronze'},{code:'S 4685HAB-L/FA',finish:'Antique Brass'},{code:'S 4685PN-L/FA',finish:'Nickel'}]},
+    { name:'Country Semi Flush Bell Jar', level:9, skus:[{code:'CHC 2109AB',finish:'Antique-Burnished Brass'},{code:'CHC 2109BZ',finish:'Bronze'},{code:'CHC 2109PN',finish:'Nickel'}]},
+    { name:'Go Lightly Signature', level:9, skus:[{code:'BBL 5080C-S',finish:'Charcoal with Silk Shades'},{code:'BBL 5080G-L',finish:'Gilded with Linen Shades'}]},
+    { name:'Halo Signature', level:9, skus:[{code:'BBL 4094BLK',finish:'Black'},{code:'BBL 4094BSL',finish:'Burnished Silver Leaf'},{code:'BBL 4094G',finish:'Gild'},{code:'BBL 4094WHT',finish:'White'}]},
+    { name:'Rosehill Semi-Flush Signature', level:9, skus:[{code:'ARN 4000HAB-WG',finish:'Hand-Rubbed Antique Brass'},{code:'ARN 4000PN-WG',finish:'Polished Nickel'}]},
+  ]},
+  { id:'statement', name:'Statement Chandeliers', shape:'hexagon', color:'#7C3AED', letter:'SC', models:[
+    { name:'Eldon Medium', level:1, skus:[{code:'DJC1194MBK',finish:'Black'},{code:'DJC1194SB',finish:'Satin Brass'}]},
+    { name:'Vector 5 Light Studio', level:1, skus:[{code:'3124305-05',finish:'Chrome'},{code:'3124305-112',finish:'Black'},{code:'3124305-848',finish:'Satin Brass'},{code:'3124305-962',finish:'Nickel'}]},
+    { name:'Baker 4 Light Studio', level:2, skus:[{code:'3187204-112',finish:'Black'},{code:'3187204-848',finish:'Satin Black'},{code:'3187204-962',finish:'Nickel'}]},
+    { name:'Elden Large Studio', level:2, skus:[{code:'DJC1205MBK',finish:'Black'},{code:'DJC1205SB',finish:'Satin Brass'}]},
+    { name:'Foxdale Studio', level:2, skus:[{code:'3109305-112',finish:'Black'},{code:'3109305-848',finish:'Satin Brass'},{code:'3109305-962',finish:'Brushed Nickel'}]},
+    { name:'Dianna 5 Light Lantern', level:3, skus:[{code:'5692605-112',finish:'Black'},{code:'5692605-848',finish:'Satin Brass'},{code:'5692605-962',finish:'Nickel'}]},
+    { name:'Morrison 3 Light Lantern Studio', level:3, skus:[{code:'5279403-848',finish:'Satin Brass'},{code:'5279403-962',finish:'Nickel'}]},
+    { name:'Sawyer Studio', level:3, skus:[{code:'KSC1034BBS',finish:'Burnished Brass'},{code:'KSC1034PN',finish:'Nickel'}]},
+    { name:'Vilera Five Light Chandelier', level:3, skus:[{code:'GLC1865BNE',finish:'Brushed Nickel'},{code:'GLC1865SBE',finish:'Satin Brass'}]},
+    { name:'Hanover Studio', level:4, skus:[{code:'CC1315BBS',finish:'Burnished Brass'}]},
+    { name:'Paisley Medium Studio', level:4, skus:[{code:'AC1114BBS',finish:'Burnished Brass'},{code:'AC1114PN',finish:'Nickel'}]},
+    { name:'Brianna Small Studio', level:5, skus:[{code:'EC1006AI',finish:'Aged Iron'},{code:'EC1006BBS',finish:'Burnished Brass'},{code:'EC1006PN',finish:'Nickel'}]},
+    { name:'Reed', level:5, skus:[{code:'TOB 5011AN-L',finish:'Antique Nickel with Linen Shade'},{code:'TOB 5011AN-NP',finish:'Antique Nickel with Natural Paper Shade'},{code:'TOB 5011HAB-L',finish:'Antique Brass with Linen Shade'},{code:'TOB 5011PN-L',finish:'Polished Nickel with Linen Shade'},{code:'TOB 5011BZ-L',finish:'Bronze with Linen Shade'},{code:'TOB 5011HAB-L/BT',finish:'Antique Brass with Shade & Black Trim'}]},
+    { name:'Bryant Large', level:7, skus:[{code:'TOB 5003AN-L',finish:'Antique Nickel with Linen Shade'},{code:'TOB 5003BZ/HAB-L',finish:'Bronze and Antique Brass with Shade'},{code:'TOB 5003BZ-L',finish:'Bronze with Linen Shade'},{code:'TOB 5003HAB-L',finish:'Antique Brass with Linen Shade'},{code:'TOB 5003PN-L',finish:'Polished Nickel with Linen Shade'}]},
+    { name:'Vendome Small', level:7, skus:[{code:'TOB 5007AS-NP',finish:'Antique Silver w/ Natural Paper Shade'},{code:'TOB 5007BZ-L',finish:'Bronze w/ Linen Shade'},{code:'TOB 5007HAB-L',finish:'Hand Rubbed Antique Brass w/ Linen Shade'},{code:'TOB 5007PN-L',finish:'Nickel w/ Linen Shade'}]},
+    { name:'Piaf Large', level:8, skus:[{code:'TOB 5451AG-L',finish:'Antique Gild with Linen Shade'},{code:'TOB 5451AI/EBO-L',finish:'Aged Iron and Ebonized Oak with Shade'},{code:'TOB 5451PW-L',finish:'Plaster White with Linen Shade'}]},
+    { name:'Belfair Large', level:9, skus:[{code:'S 5751AI',finish:'Aged Iron'},{code:'S 5751GI',finish:'Gilded Iron'}]},
+    { name:'Nancy 25 Woven Hanging Shade', level:9, skus:[{code:'MF 5047SB-NTW',finish:'Soft Brass Natural Wicker'},{code:'MF 5047SB-WW',finish:'Soft Brass White Wicker'}]},
+    { name:'Griffin Extra Large', level:10, skus:[{code:'AL 5005BZ/CHC-L',finish:'Bronze and Chocolate Leather w/ Linen Shades'},{code:'AL 5005HAB/SDL-L',finish:'Antique Brass and Saddle Leather w/ Linen Shades'},{code:'AL 5005PN/PAR-L',finish:'Polished Nickel and Parchment Leather w/ Linen Shades'}]},
+    { name:'Whit Extra Large', level:10, skus:[{code:'MF 5052PN/NTW',finish:'PN & Natural Wicker w/ White Glass Shade'},{code:'MF 5052SB/NTW',finish:'Soft Brass & Natural Wicker w/ White Glass Shade'},{code:'MF 5052SB/WW',finish:'Soft Brass & White Wicker w/ White Glass Shade'}]},
+  ]},
+  { id:'chandelier', name:'Chandeliers', shape:'hexagon', color:'#A78BFA', letter:'CH', models:[
+    { name:'Greenwich 5 Light', level:1, skus:[{code:'3167105-112',finish:'Black'},{code:'3167105-848',finish:'Satin Brass'},{code:'3167105-962',finish:'Nickel'}]},
+    { name:'Abells Six Light Chandelier', level:2, skus:[{code:'GLC1196MBK',finish:'Black'},{code:'GLC1196SB',finish:'Satin Brass'}]},
+    { name:'Porteau Medium', level:2, skus:[{code:'DJC1024MBK',finish:'Black'},{code:'DJC1024SB',finish:'Satin Brass'}]},
+    { name:'Vector 9 Light', level:2, skus:[{code:'3124309-05',finish:'Chrome'},{code:'3124309-112',finish:'Black'},{code:'3124309-848',finish:'Satin Brass'},{code:'3124309-962',finish:'Nickel'}]},
+    { name:'Foxdale 9 Light', level:3, skus:[{code:'3109309-112',finish:'Black'},{code:'3109309-848',finish:'Satin Brass'},{code:'3109309-962',finish:'Nickel'}]},
+    { name:'Porteau Large', level:4, skus:[{code:'DJC1035MBK',finish:'Black'},{code:'DJC1035SB',finish:'Satin Brass'}]},
+    { name:'Egmont Extra Large', level:5, skus:[{code:'DJC1099BS',finish:'Brushed Steel'},{code:'DJC1099MBK',finish:'Black'},{code:'DJC1099SB',finish:'Satin Brass'}]},
+    { name:'Brianna Medium', level:6, skus:[{code:'EC1009AI',finish:'Aged Iron'},{code:'EC1009BBS',finish:'Burnished Brass'},{code:'EC1009PN',finish:'Nickel'}]},
+    { name:'Chatsworth 32 Chandelier', level:6, skus:[{code:'AC1226AI',finish:'Aged Iron'},{code:'AC1226GD',finish:'Gild'}]},
+    { name:'Marston', level:7, skus:[{code:'CC1458BBS',finish:'Burnished Brass'}]},
+    { name:'Perth Medium', level:7, skus:[{code:'CC1744AI',finish:'Aged Iron'},{code:'CC1744BBS',finish:'Burnished Brass'}]},
+    { name:'Keystone Medium', level:8, skus:[{code:'CC1179AI',finish:'Aged Iron'}]},
+    { name:'Perth Extra Large', level:9, skus:[{code:'CC1724AI',finish:'Aged Iron'},{code:'CC1724BBS',finish:'Burnished Brass'}]},
+    { name:'Darlana Large Single Ring', level:10, skus:[{code:'CHC 5174AI',finish:'Aged Iron'},{code:'CHC 5174GI',finish:'Gilded Iron'}]},
+    { name:'Ritz 36 Chandelier', level:10, skus:[{code:'PCC10110',finish:'Aged Iron'},{code:'PCC10110GD',finish:'Gild'}]},
+    { name:'Brianna Large 2-Tier', level:11, skus:[{code:'EC10015AI',finish:'Aged Iron'},{code:'EC10015BBS',finish:'Burnished Brass'},{code:'EC10015PN',finish:'Nickel'}]},
+    { name:'Piaf Grande', level:11, skus:[{code:'TOB 5452AG-L',finish:'Antique Gild w/ Linen Shades'},{code:'TOB 5452AI/EBO-L',finish:'Aged Iron and Ebonized Oak w/ Linen Shades'},{code:'TOB 5452PW-L',finish:'Plaster White w/ Linen Shades'}]},
+    { name:'Vendome Large', level:11, skus:[{code:'TOB 5008BZ-L',finish:'Bronze w/ Linen Shade'},{code:'TOB 5008HAB-L',finish:'Brass w/ Linen Shade'}]},
+    { name:'Darlana Large 2-Tiered Ring (Lv12)', level:12, skus:[{code:'CHC 5179AI',finish:'Aged Iron'},{code:'CHC 5179GI',finish:'Gilded Iron'}]},
+    { name:'Darlana Large 2-Tiered Ring (Lv13)', level:13, skus:[{code:'CHC 5179PN',finish:'Nickel'}]},
+    { name:'Darlana Large Single Ring (Lv13)', level:13, skus:[{code:'CHC 5174AB',finish:'Antique-Burnished Brass'},{code:'CHC 5174PN',finish:'Polished Nickel'}]},
+    { name:'Belfair Grande 2-Tier', level:14, skus:[{code:'IKF 5753AI',finish:'Aged Iron'},{code:'IKF 5753GI',finish:'Gilded Iron'}]},
+  ]},
+  { id:'linear', name:'Linear Chandeliers', shape:'hexagon', color:'#6366F1', letter:'LC', models:[
+    { name:'Foxdale 6 Light', level:1, skus:[{code:'3609306-112',finish:'Black'},{code:'3609306-848',finish:'Satin Brass'},{code:'3609306-962',finish:'Nickel'}]},
+    { name:'Laguna Large', level:1, skus:[{code:'CC1712BBS',finish:'Brushed Brass'}]},
+    { name:'Moffet Street 6 Light', level:2, skus:[{code:'6634506-710',finish:'Burnt Sienna'},{code:'6634506-848',finish:'Satin Brass'},{code:'6634506-872',finish:'Washed Pine'},{code:'6634506-962',finish:'Nickel'}]},
+    { name:'Dianna Medium', level:3, skus:[{code:'6692605-112',finish:'Black'},{code:'6692605-848',finish:'Satin Brass'},{code:'6692605-962',finish:'Nickel'}]},
+    { name:'Moffet Street 7 Light', level:3, skus:[{code:'6634507-710',finish:'Bronze'},{code:'6634507-848',finish:'Satin Brass'},{code:'6634507-872',finish:'Washed Pine'},{code:'6634507-962',finish:'Nickel'}]},
+    { name:'Perryton 8 Light', level:3, skus:[{code:'6615008EN-05',finish:'Chrome'},{code:'6615008EN-112',finish:'Satin Black'},{code:'6615008EN-710',finish:'Bronze'},{code:'6615008EN-848',finish:'Satin Brass'}]},
+    { name:'Bayview Studio', level:4, skus:[{code:'CC1368AI',finish:'Aged Iron'}]},
+    { name:'Charleston 4 Light', level:4, skus:[{code:'6691004-112',finish:'Black'},{code:'6691004-848',finish:'Satin Brass'}]},
+    { name:'Thayer Linear Chandelier', level:4, skus:[{code:'F3326/5ADB',finish:'Antique Gild'},{code:'F3326/5SMS',finish:'Smith Steel'}]},
+    { name:'Griffin Grande', level:5, skus:[{code:'AL 5010BZ/CHC-L',finish:'Bronze and Chocolate Leather w/ Linen Shades'},{code:'AL 5010HAB/SDL-L',finish:'Antique Brass and Saddle Leather w/ Linen Shades'},{code:'AL 5010PN/PAR-L',finish:'Polished Nickel and Parchment Leather w/ Linen Shades'}]},
+    { name:'Piaf Large 2 Light', level:5, skus:[{code:'TOB 5455AG-L',finish:'Antique Gild w/ Linen Shades'},{code:'TOB 5455AI/EBO-L',finish:'Aged Iron and Ebonized Oak w/ Linen Shades'},{code:'TOB 5455PW-L',finish:'Plaster White w/ Linen Shades'}]},
+    { name:'Ashton Extra Large 4 Light', level:6, skus:[{code:'CHC 5335AI-L',finish:'Aged Iron w/ Linen Shades'},{code:'CHC 5335GI-L',finish:'Gilded Iron w/ Linen Shades'},{code:'CHC 5335PW-L',finish:'Plaster White w/ Linen Shades'}]},
+  ]},
+  { id:'pendant', name:'Pendants', shape:'diamond', color:'#0EA5E9', letter:'P', models:[
+    { name:'Clark Studio', level:1, skus:[{code:'6590501-112',finish:'Black'},{code:'6590501-848',finish:'Satin Brass'},{code:'6590501-962',finish:'Nickel'}]},
+    { name:'Zire Studio', level:1, skus:[{code:'6590301-05',finish:'Chrome'},{code:'6590301-112',finish:'Black'},{code:'6590301-778',finish:'Bronze'},{code:'6590301-848',finish:'Satin Brass'},{code:'6590301-962',finish:'Nickel'}]},
+    { name:'Dianna Studio', level:2, skus:[{code:'5192603-112',finish:'Black'},{code:'5192603-848',finish:'Satin Brass'},{code:'5192603-962',finish:'Nickel'}]},
+    { name:'Gordon Studio', level:2, skus:[{code:'6585101-112',finish:'Black'},{code:'6585101-817',finish:'White'},{code:'6585101-848',finish:'Satin Brass'},{code:'6585101-965',finish:'Nickel'}]},
+    { name:'Geneva Medium Pendant', level:3, skus:[{code:'CP1161AI',finish:'Aged Iron'},{code:'CP1161BBS',finish:'Burnished Brass'},{code:'CP1161PN',finish:'Polished Nickel'}]},
+    { name:'Kate Studio', level:4, skus:[{code:'6592101-112',finish:'Black'},{code:'6592101-848',finish:'Satin Brass'},{code:'6592101-962',finish:'Nickel'}]},
+    { name:'Norman Medium Wicker Pendant', level:4, skus:[{code:'GLP1081BBS-BRTN',finish:'Satin Brass with Blonde Rattan'},{code:'GLP1081MBK-ASW',finish:'Midnight Black with Ash Wicker'},{code:'GLP1081SB-CLW',finish:'Satin Brass with Chalk Wicker'}]},
+    { name:'Charleston Small', level:5, skus:[{code:'5191004-112',finish:'Black'},{code:'5191004-848',finish:'Satin Brass'}]},
+    { name:'Ivie Studio', level:5, skus:[{code:'LP1081TWBWLW',finish:'Time Worn Brass'}]},
+    { name:'Lelander Studio', level:5, skus:[{code:'AP1241ADB',finish:'Antique Gold'},{code:'AP1241SMS',finish:'Smith Steel'}]},
+    { name:'Morrison Small', level:5, skus:[{code:'5179403-848',finish:'Satin Brass'},{code:'5179403-962',finish:'Nickel'}]},
+    { name:'Vilera Three Light Pendant', level:5, skus:[{code:'GLP1873BNE',finish:'Brushed Nickel'},{code:'GLP1873SBE',finish:'Satin Brass'}]},
+    { name:'Whare Medium Studio', level:5, skus:[{code:'EP1241AI',finish:'Aged Iron'},{code:'EP1241BBS',finish:'Burnished Brass'}]},
+    { name:'Lawler Studio', level:6, skus:[{code:'F3155/3BBS',finish:'Burnished Brass'},{code:'F3155/3CH',finish:'Chrome'},{code:'F3155/3SN',finish:'Nickel'}]},
+    { name:'Atlantic Studio', level:7, skus:[{code:'CP1041AI',finish:'Aged Iron'},{code:'CP1041BBS',finish:'Burnished Brass'},{code:'CP1041PN',finish:'Nickel'}]},
+    { name:'Stonington Studio', level:7, skus:[{code:'CP1112ADB',finish:'Antique Gild'}]},
+    { name:'Darlana Signature', level:8, skus:[{code:'CHC 2164AI',finish:'Aged Iron'},{code:'CHC 2164GI',finish:'Gilded Iron'},{code:'CHC 2164PN',finish:'Nickel'}]},
+    { name:'Savina 20 Pendant', level:8, skus:[{code:'CP1481AI',finish:'Aged Iron'},{code:'CP1481BBS',finish:'Burnished Brass'}]},
+    { name:'Whare Large Studio', level:8, skus:[{code:'EP1251AI',finish:'Aged Iron'},{code:'EP1251BBS',finish:'Burnished Brass'}]},
+    { name:'Soren 20 Pendant', level:9, skus:[{code:'AL 5110BZ-SP',finish:'Bronze'},{code:'AL 5110HAB-SP',finish:'Hand-Rubbed Antique Brass'},{code:'AL 5110PN-SP',finish:'Polished Nickel'}]},
+    { name:'Reese 14 Signature', level:10, skus:[{code:'MF 5181BZ-CG',finish:'Bronze with Clear Glass'},{code:'MF 5181PN-CG',finish:'Polished Nickel with Clear Glass'},{code:'MF 5181SB-CG',finish:'Soft Brass with Clear Glass'}]},
+    { name:'Elliot Grande Signature', level:11, skus:[{code:'SK 5355PGY',finish:'Portland Gray'},{code:'SK 5355WHT',finish:'Matte White'}]},
+    { name:'Reese 18 Signature', level:11, skus:[{code:'S 5182BZ-CG',finish:'Bronze with Clear Glass'},{code:'S 5182PN-CG',finish:'Polished Nickel with Clear Glass'},{code:'S 5182SB-CG',finish:'Soft Brass with Clear Glass'}]},
+  ]},
+  { id:'vanity', name:'Vanity Lights', shape:'circle', color:'#F472B6', letter:'VL', models:[
+    { name:'Emile Medium Gen Lighting', level:1, skus:[{code:'GLV1022CH',finish:'Chrome'},{code:'GLV1022MBK',finish:'Black'},{code:'GLV1022SB',finish:'Satin Bronze'},{code:'GLV1022BS',finish:'Brushed Steel'}]},
+    { name:'Vinton Gen Lighting', level:1, skus:[{code:'4420902-05',finish:'Chrome'},{code:'4420902-112',finish:'Black'},{code:'4420902-710',finish:'ORB'},{code:'4420902-962',finish:'BN'}]},
+    { name:'Oslo 2 Light Gen Lighting', level:2, skus:[{code:'41171-05',finish:'Chrome'},{code:'41171-112',finish:'Black'},{code:'41171-710',finish:'Bronze'},{code:'41171-962',finish:'BN'}]},
+    { name:'Rory 2 Light Gen Lighting', level:2, skus:[{code:'GLV1012BS',finish:'Brushed Steel'},{code:'GLV1012CH',finish:'Chrome'},{code:'GLV1012MBK',finish:'Black'},{code:'GLV1012SB',finish:'Satin Bronze'}]},
+    { name:'Emile Large Gen Lighting', level:3, skus:[{code:'GLV1023BS',finish:'Brushed Steel'},{code:'GLV1023CH',finish:'Chrome'},{code:'GLV1023MBK',finish:'Black'},{code:'GLV1023SB',finish:'Satin Brass'}]},
+    { name:'Oak Moore 2 Light Studio', level:3, skus:[{code:'4457102-05',finish:'Chrome'},{code:'4457102-112',finish:'Black'},{code:'4457102-848',finish:'Satin Brass'},{code:'4457102-962',finish:'Nickel'}]},
+    { name:'Sayward Studio', level:3, skus:[{code:'DJV1002BS',finish:'Brushed Steel'},{code:'DJV1002CH',finish:'Chrome'},{code:'DJV1002MBK',finish:'Black'},{code:'DJV1002SB',finish:'Satin Brass'}]},
+    { name:'Codyn 2 Light Gen Lighting', level:4, skus:[{code:'4455702-112',finish:'Black'},{code:'4455702-848',finish:'Satin Brass'},{code:'4455702-962',finish:'Nickel'}]},
+    { name:'Oak Moore 3 Light Studio', level:4, skus:[{code:'4457103-05',finish:'Chrome'},{code:'4457103-112',finish:'Black'},{code:'4457103-848',finish:'Satin Brass'},{code:'4457103-962',finish:'Nickel'}]},
+    { name:'Oslo 3 Light Gen Lighting', level:4, skus:[{code:'41172-05',finish:'Chrome'},{code:'41172-112',finish:'Black'},{code:'41172-710',finish:'Bronze'},{code:'41172-962',finish:'Nickel'}]},
+    { name:'Syden Studio', level:4, skus:[{code:'4559293S-112',finish:'Black'},{code:'4559293S-848',finish:'Satin Brass'},{code:'4559293S-962',finish:'Nickel'}]},
+    { name:'Codyn 3 Light Gen Lighting', level:5, skus:[{code:'4455703-112',finish:'Black'},{code:'4455703-848',finish:'Satin Brass'},{code:'4455703-962',finish:'Nickel'}]},
+    { name:'Hanover 2 Light Studio', level:5, skus:[{code:'CV1052AI',finish:'Aged Iron'},{code:'CV1052BBS',finish:'Burnished Brass'},{code:'CV1052PN',finish:'Nickel'}]},
+    { name:'Hanover 3 Light Studio', level:6, skus:[{code:'CV1053AI',finish:'Aged Iron'},{code:'CV1053BBS',finish:'Burnished Brass'},{code:'CV1053PN',finish:'Nickel'}]},
+    { name:'Geneva Studio', level:7, skus:[{code:'CV1023AI',finish:'Aged Iron'},{code:'CV1023BBS',finish:'Burnished Brass'},{code:'CV1023PN',finish:'Nickel'}]},
+  ]},
+  { id:'fan', name:'Ceiling Fans', shape:'plus', color:'#16A34A', letter:'CF', models:[
+    { name:'Linden 52 Fan w/ Light Kit', level:1, skus:[{code:'5LD52BSD',finish:'Nickel'},{code:'5LD52BZD',finish:'Bronze'},{code:'5LD52MBKD',finish:'Black'},{code:'5LD52RZWD',finish:'White'}]},
+    { name:'Linden 52 Fan w/o Light Kit', level:1, skus:[{code:'5LD52BS',finish:'Nickel'},{code:'5LD52BZ',finish:'Bronze'},{code:'5LD52MBK',finish:'Black'},{code:'5LD52RZW',finish:'White'}]},
+    { name:'Rozzen 52 w/o Light', level:2, skus:[{code:'3RZR52AGP',finish:'Pewter'},{code:'3RZR52BBS',finish:'Brass'},{code:'3RZR52BS',finish:'Brushed Steel'},{code:'3RZR52MBK',finish:'Black'},{code:'3RZR52RZW',finish:'White'}]},
+    { name:'Vision 52 LED w/ Light', level:2, skus:[{code:'3VNR52BSLGD-V1',finish:'Nickel'},{code:'3VNR52MBKD-V1',finish:'Black'},{code:'3VNR52OZD-V1',finish:'Bronze'},{code:'3VNR52RZWD-V1',finish:'White'}]},
+    { name:'Subway 56 w/o Light', level:3, skus:[{code:'4SBWR56MBK',finish:'Black'},{code:'4SBWR56PN',finish:'Nickel'},{code:'4SBWR56HAB',finish:'Brass'}]},
+    { name:'Collins 52 w/o Light', level:4, skus:[{code:'3CLNSM52AGP',finish:'Aged Pewter / Light Grey Oak Blades'},{code:'3CLNSM52BBSWWO',finish:'Burnished Brass / Washed White Oak Blades'},{code:'3CLNSM52BS',finish:'Brushed Steel / Dark Walnut Blades'},{code:'3CLNSM52MBK',finish:'Black / Dark Walnut Blades'},{code:'3CLNSM52MBKNH',finish:'Black / Natural Honey Blades'}]},
+    { name:'Bryden 60 LED w/ Light', level:5, skus:[{code:'3BRYSM60BSD',finish:'Brushed Steel'},{code:'3BRYSM60HABD',finish:'Hand Rubbed Antique Brass'},{code:'3BRYSM60MBKD',finish:'Black'}]},
+    { name:'Maverick 52 w/o Light', level:5, skus:[{code:'3MAVSM52BBSWWO',finish:'Burnished Brass / Washed White Oak Blades'},{code:'3MAVSM52MBK',finish:'Midnight Black / Dark Walnut Blades'},{code:'3MAVSM52MBKNH',finish:'Midnight Black / Natural Honey Blades'}]},
+    { name:'Maverick 60 w/o Light', level:5, skus:[{code:'3MAVR60AGP',finish:'Aged Pewter / Light Grey Oak Blades'},{code:'3MAVR60BK',finish:'Black / Dark Walnut Blades'},{code:'3MAVR60BKBK',finish:'Black / Black Blades'},{code:'3MAVR60BS',finish:'Brushed Steel / Dark Walnut Blades'},{code:'3MAVR60BSKOA',finish:'Brushed Steel / Koa Blades'},{code:'3MAVR60RZW',finish:'White / White Blades'},{code:'3MAVR60RZWBBS',finish:'Burnished Brass / White Blades'}]},
+    { name:'Maverick 60 w/ Light', level:6, skus:[{code:'3MAVR60AGPD',finish:'Aged Pewter / Light Grey Oak Blades'},{code:'3MAVR60BKBKD',finish:'Black / Black Blades'},{code:'3MAVR60BKD',finish:'Black / Dark Walnut Blades'},{code:'3MAVR60BSKOAD',finish:'Brushed Steel / Koa Blades'},{code:'3MAVR60RZWD',finish:'White / White Blades'},{code:'3MAVR60BSD',finish:'Brushed Steel / Dark Walnut Blades'}]},
+  ]},
+  { id:'wallsconce', name:'Wall Sconces', shape:'triangle', color:'#F97316', letter:'WS', models:[
+    { name:'Foxdale 1 Light', level:1, skus:[{code:'4109301-112',finish:'Black'},{code:'4109301-848',finish:'Satin Brass'},{code:'4109301-962',finish:'Nickel'}]},
+    { name:'Porteau Medium', level:1, skus:[{code:'DJW1011MBK',finish:'Black'},{code:'DJW1011SB',finish:'Satin Brass'}]},
+    { name:'Chatsworth 13 Sconce', level:2, skus:[{code:'AW1231AI',finish:'Aged Iron'},{code:'AW1231GD',finish:'Gild'}]},
+    { name:'Salem Single Arm', level:2, skus:[{code:'4198101-112',finish:'Black'},{code:'4198101-848',finish:'Satin Brass'},{code:'4198101-962',finish:'Nickel'}]},
+    { name:'Brianna Double', level:3, skus:[{code:'EW 1002AI',finish:'Aged Iron'},{code:'EW 1002BBS',finish:'Burnished Brass'},{code:'EW 1002PN',finish:'Nickel'}]},
+    { name:'Montour', level:3, skus:[{code:'TFW 1021AI',finish:'Aged Iron'},{code:'TFW 1021CGD',finish:'Coastal Gild'},{code:'TFW 1021MWT',finish:'White'}]},
+    { name:'Baxley Double', level:4, skus:[{code:'AW 1202PN',finish:'Nickel'},{code:'AW1202BBS',finish:'Burnished Brass'}]},
+    { name:'Baxley', level:4, skus:[{code:'AW1051BBS',finish:'Burnished Brass'},{code:'AW1051PN',finish:'Nickel'}]},
+    { name:'Capri Double', level:4, skus:[{code:'TW1012AI',finish:'Aged Iron'},{code:'TW1012PN',finish:'Nickel'}]},
+    { name:'Capri Tail', level:4, skus:[{code:'TW 1021AI',finish:'Aged Iron'},{code:'TW 1021PN',finish:'Nickel'}]},
+    { name:'Kenyon 18 Picture Light', level:4, skus:[{code:'CW1192AI',finish:'Aged Iron'},{code:'CW1192BBS',finish:'Burnished Brass'}]},
+    { name:'Lyndsie Small', level:5, skus:[{code:'AL 2000AI-L',finish:'Aged Iron w/ Linen Shade'},{code:'AL 2000PN-L',finish:'Polished Nickel w/ Linen Shade'}]},
+    { name:'Kenyon 24 Picture Light', level:6, skus:[{code:'CW1202AI',finish:'Aged Iron'},{code:'CW1202BBS',finish:'Burnished Brass'}]},
+    { name:'Lyndsie Small (Lv6)', level:6, skus:[{code:'AL 2000HAB-L',finish:'Antique Brass w/ Linen Shade'}]},
+    { name:'Vendome Double', level:6, skus:[{code:'TOB 2008BZ-L',finish:'Bronze w/ Linen Shade'},{code:'TOB 2008HAB-L',finish:'Hand Rubbed Antique Brass w/ Linen Shade'},{code:'TOB 2008PN-L',finish:'Nickel w/ Linen Shade'}]},
+    { name:'Lucia', level:7, skus:[{code:'JN 2051CEL/CG-L',finish:'Celadon and Crystal w/ Linen Shade'},{code:'JN 2051G/CG-L',finish:'Gild and Crystal w/ Linen Shade'},{code:'JN 2051MBK/CG-L',finish:'Matte Black and Crystal w/ Linen Shade'}]},
+    { name:'Hulton Double', level:8, skus:[{code:'TOB 2191BZ-L',finish:'Bronze w/ Linen Shades'},{code:'TOB 2191HAB-L',finish:'Hand Rubbed Antique Brass w/ Linen Shades'},{code:'TOB 2191PN-L',finish:'Polished Nickel w/ Linen Shades'}]},
+    { name:'Leighton', level:8, skus:[{code:'KS 2065PN-BLS',finish:'Polished Nickel w/ Blush Tinted Glass'},{code:'KS 2065PN-CRE',finish:'Polished Nickel w/ Cream Tinted Glass'},{code:'KS 2065SB-BLS',finish:'Soft Brass w/ Blush Tinted Glass'},{code:'KS 2065SB-CRE',finish:'Soft Brass w/ Cream Tinted Glass'}]},
+  ]},
+  { id:'extwall', name:'Exterior Wall Sconces', shape:'triangle', color:'#78716C', letter:'XW', models:[
+    { name:'Barn Light', level:1, skus:[{code:'8637401-12',finish:'Black'},{code:'8637401-15',finish:'White'},{code:'8637401-71',finish:'Bronze'}]},
+    { name:'Founders', level:2, skus:[{code:'8648401-12',finish:'Black'},{code:'8648401-71',finish:'Bronze'}]},
+    { name:'Galena', level:2, skus:[{code:'OL14402NCP',finish:'Copper'},{code:'OL14402SBL',finish:'Sable'},{code:'OL14402TXB',finish:'Black'}]},
+    { name:'Howell', level:2, skus:[{code:'DJO1011ANBZ',finish:'Bronze'},{code:'DJO1011TXB',finish:'Black'}]},
+    { name:'Valdo', level:2, skus:[{code:'8531101-71',finish:'Black'}]},
+    { name:'Warren', level:3, skus:[{code:'OL15401TXB',finish:'Black'}]},
+    { name:'Hyannis', level:4, skus:[{code:'CO1392TXB',finish:'Black'}]},
+    { name:'Fresno', level:5, skus:[{code:'CHD2935AI-CG',finish:'Aged Iron'}]},
+    { name:'Hyannis (Lv6)', level:6, skus:[{code:'CO1424NCP',finish:'Copper'}]},
+    { name:'Fresno Large Gas Lantern (Lv7)', level:7, skus:[{code:'CHO 2561BLK-CG',finish:'Matte Black w/ Clear Glass'}]},
+    { name:'Albermarle Small Gas Lantern', level:8, skus:[{code:'CHO 2435BLK-CG',finish:'Matte Black and Brass w/ Clear Glass'},{code:'CHO 2435SC-CG',finish:'Soft Copper and Brass w/ Clear Glass'}]},
+    { name:'Fresno Large Gas Lantern (Lv8)', level:8, skus:[{code:'CHO 2561SC-CG',finish:'Soft Copper w/ Clear Glass'}]},
+    { name:'Albermarle Medium Gas Lantern (Lv9)', level:9, skus:[{code:'CHO 2436BLK-CG',finish:'Matte Black and Brass w/ Clear Glass'}]},
+    { name:'Stratford Medium Gas Lantern', level:9, skus:[{code:'CHO 2451BLK-CG',finish:'Matte Black w/ Clear Glass'},{code:'CHO 2451SC-CG',finish:'Soft Copper w/ Clear Glass'}]},
+    { name:'Albermarle Medium Gas Lantern (Lv10)', level:10, skus:[{code:'CHO 2436SC-CG',finish:'Soft Copper and Brass w/ Clear Glass'}]},
+  ]},
+  { id:'extlight', name:'Exterior Lights', shape:'circle', color:'#0F766E', letter:'XL', models:[
+    { name:'Founders Pendant', level:1, skus:[{code:'6248401-12',finish:'Black'},{code:'648401-71',finish:'Bronze'}]},
+    { name:'Galena Pendant', level:2, skus:[{code:'OL14408SBL',finish:'Sable'},{code:'OL14408TXB',finish:'Black'}]},
+    { name:'Wellsworth Pendant', level:2, skus:[{code:'OL13209ANBZ',finish:'Bronze'},{code:'OL13209PDB',finish:'Brass'},{code:'OL13209TXB',finish:'Black'}]},
+    { name:'Freeport Flush Mount', level:3, skus:[{code:'CO1182HTCP',finish:'Heritage Copper'}]},
+    { name:'Hyannis Pendant', level:4, skus:[{code:'CO1424NCP',finish:'Copper'},{code:'CO1424TXB',finish:'Black'}]},
+  ]},
+  { id:'outfan', name:'Outdoor Fans', shape:'plus', color:'#65A30D', letter:'OF', models:[
+    { name:'Linden 44 Outdoor w/o Light', level:1, skus:[{code:'5LDO44BZ',finish:'Bronze'},{code:'5LDO44MBK',finish:'Black'},{code:'5LDO44RZW',finish:'White'}]},
+    { name:'Linden 52 Outdoor w/ Light', level:2, skus:[{code:'5LDO52BZD',finish:'Bronze'},{code:'5LDO52MBKD',finish:'Black'},{code:'5LDO52RZWD',finish:'White'}]},
+    { name:'Avila Coastal 52 w/ Light', level:3, skus:[{code:'3AVLCR54MBKD',finish:'Black'},{code:'3AVLCR54RZWD',finish:'White'}]},
+  ]},
+];
 
 let st = {
   user: null, isAdmin: false,
@@ -1447,6 +1703,158 @@ document.getElementById('csAddBtn').onclick=()=>{
   renderCustomList();renderFixtureList();
   csDialog.classList.remove('open');
   document.getElementById('csName').value='';document.getElementById('csLetter').value='';
+  activatePlace(cs.id);
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// CATALOG
+// ══════════════════════════════════════════════════════════════════════════
+let _catalogSel = null; // { cat, model, sku }
+
+function openCatalog() {
+  _catalogSel = null;
+  document.getElementById('catalogOverlay').classList.add('open');
+  document.getElementById('catalogSearch').value = '';
+  renderCatalog('');
+  document.getElementById('catalogFooter').style.display = 'none';
+  document.getElementById('catalogSearch').focus();
+}
+
+function closeCatalog() {
+  document.getElementById('catalogOverlay').classList.remove('open');
+  _catalogSel = null;
+}
+
+function renderCatalog(q) {
+  const body = document.getElementById('catalogBody');
+  const term = (q || '').toLowerCase().trim();
+  body.innerHTML = '';
+
+  CATALOG.forEach(cat => {
+    const matchingModels = cat.models.map(model => {
+      const modelMatch = !term || model.name.toLowerCase().includes(term);
+      const matchingSkus = model.skus.filter(sku =>
+        modelMatch ||
+        sku.code.toLowerCase().includes(term) ||
+        sku.finish.toLowerCase().includes(term)
+      );
+      if (!matchingSkus.length) return null;
+      return { model, skus: matchingSkus };
+    }).filter(Boolean);
+
+    if (!matchingModels.length) return;
+
+    const catEl = document.createElement('div');
+    catEl.className = 'cat-section';
+    catEl.innerHTML = `<div class="cat-section-title">${cat.name}</div>`;
+
+    matchingModels.forEach(({ model, skus }) => {
+      const modelEl = document.createElement('div');
+      modelEl.className = 'cat-model';
+      modelEl.innerHTML = `<div class="cat-model-name">${model.name}</div><div class="cat-skus"></div>`;
+      const skuContainer = modelEl.querySelector('.cat-skus');
+
+      skus.forEach(sku => {
+        const skuEl = document.createElement('div');
+        skuEl.className = 'cat-sku';
+        skuEl.innerHTML = `<span class="cat-sku-code">${sku.code}</span><span class="cat-sku-finish">${sku.finish}</span>`;
+        skuEl.onclick = (e) => selectCatalogSku(cat, model, sku, e.currentTarget);
+        skuContainer.appendChild(skuEl);
+      });
+
+      catEl.appendChild(modelEl);
+    });
+
+    body.appendChild(catEl);
+  });
+
+  if (!body.innerHTML) {
+    body.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-muted)">No fixtures match your search.</div>';
+  }
+}
+
+function selectCatalogSku(cat, model, sku, skuEl) {
+  _catalogSel = { cat, model, sku };
+
+  // highlight selected sku
+  document.querySelectorAll('.cat-sku').forEach(el => el.classList.remove('selected'));
+  if (skuEl) skuEl.classList.add('selected');
+
+  // populate footer
+  const footer = document.getElementById('catalogFooter');
+  footer.style.display = '';
+  document.getElementById('catalogSelLabel').textContent = `${model.name} — ${sku.code} (${sku.finish})`;
+
+  // shape selector
+  const shapeSel = document.getElementById('catalogShapeSel');
+  shapeSel.innerHTML = CUSTOM_SHAPES.map(s =>
+    `<option value="${s}" ${s === cat.shape ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+  ).join('');
+
+  // color row
+  const colorRow = document.getElementById('catalogColorRow');
+  colorRow.innerHTML = CUSTOM_COLORS.map(c =>
+    `<div class="color-swatch${c.toLowerCase() === cat.color.toLowerCase() ? ' selected' : ''}" style="background:${c}" data-val="${c}" title="${c}"></div>`
+  ).join('');
+  colorRow.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.onclick = () => {
+      colorRow.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      updateCatalogPreview();
+    };
+  });
+
+  // letter input
+  document.getElementById('catalogLetterInput').value = cat.letter;
+
+  updateCatalogPreview();
+  footer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function updateCatalogPreview() {
+  if (!_catalogSel) return;
+  const shape = document.getElementById('catalogShapeSel').value;
+  const colorSwatch = document.querySelector('#catalogColorRow .color-swatch.selected');
+  const color = colorSwatch ? colorSwatch.dataset.val : _catalogSel.cat.color;
+  const letter = (document.getElementById('catalogLetterInput').value || _catalogSel.cat.letter).toUpperCase();
+  const fixture = { shape, color, letter };
+  document.getElementById('catalogPreview').innerHTML = stampSVG(fixture, 36, false);
+}
+
+document.getElementById('catalogBtn').onclick = openCatalog;
+document.getElementById('catalogCloseBtn').onclick = closeCatalog;
+document.getElementById('catalogCancelBtn').onclick = closeCatalog;
+
+document.getElementById('catalogOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('catalogOverlay')) closeCatalog();
+});
+
+document.getElementById('catalogSearch').addEventListener('input', e => {
+  renderCatalog(e.target.value);
+});
+
+document.getElementById('catalogShapeSel').addEventListener('change', updateCatalogPreview);
+document.getElementById('catalogLetterInput').addEventListener('input', updateCatalogPreview);
+
+document.getElementById('catalogAddBtn').onclick = () => {
+  if (!_catalogSel) return;
+  const { cat, model, sku } = _catalogSel;
+  const label = `${model.name} - ${sku.finish}`;
+  const shape = document.getElementById('catalogShapeSel').value;
+  const colorSwatch = document.querySelector('#catalogColorRow .color-swatch.selected');
+  const color = colorSwatch ? colorSwatch.dataset.val : cat.color;
+  const letter = (document.getElementById('catalogLetterInput').value || cat.letter).trim().slice(0, 2);
+
+  // reuse existing stamp with same label
+  let cs = st.customStamps.find(x => x.label === label);
+  if (!cs) {
+    cs = { id: 'cat_' + Date.now(), label, shape, color, letter };
+    st.customStamps.push(cs);
+    st.dirty = true;
+    renderCustomList(); renderFixtureList();
+  }
+
+  closeCatalog();
   activatePlace(cs.id);
 };
 
