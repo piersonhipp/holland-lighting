@@ -288,6 +288,20 @@
   #pdfCanvas { display: block; cursor: default; }
   #stampLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
   #guideLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+  #zoneLabels { position: absolute; top: 0; left: 0; width: 100%; height: 0; pointer-events: none; overflow: visible; z-index: 10; }
+  .zone-name-label {
+    position: absolute; top: 6px; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.6); border-radius: 4px; padding: 3px 8px 3px 10px;
+    pointer-events: all; cursor: default; white-space: nowrap;
+    font-family: sans-serif; font-size: 11px; font-weight: 700; color: #f59e0b;
+    user-select: none;
+  }
+  .zone-edit-btn {
+    font-size: 11px; cursor: pointer; color: rgba(245,158,11,0.7);
+    opacity: 0; transition: opacity 0.15s; line-height: 1; padding: 0 1px;
+  }
+  .zone-name-label:hover .zone-edit-btn { opacity: 1; }
   .stamp { position: absolute; pointer-events: all; transform: translate(-50%, -50%); cursor: pointer; user-select: none; }
   .stamp.selected svg { filter: drop-shadow(0 0 5px #1e293b) drop-shadow(0 0 3px #1e293b); }
   #emptyState {
@@ -1379,7 +1393,8 @@ function ensureCanvas() {
   const sl = document.createElement('div'); sl.id='stampLayer';
   const gl = document.createElementNS('http://www.w3.org/2000/svg','svg'); gl.id='guideLayer';
   gl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;';
-  container.appendChild(pdfCv); container.appendChild(dl); container.appendChild(sl); container.appendChild(gl);
+  const zl = document.createElement('div'); zl.id='zoneLabels';
+  container.appendChild(pdfCv); container.appendChild(dl); container.appendChild(sl); container.appendChild(gl); container.appendChild(zl);
   wrap.appendChild(container);
   bindCanvasEvents(pdfCv, sl, container);
 }
@@ -1512,34 +1527,39 @@ function renderDividers() {
   layer.setAttribute('viewBox', `0 0 ${W} ${H}`);
   layer.setAttribute('width', W); layer.setAttribute('height', H);
   const dividers = activeDividers();
+
+  // HTML zone name labels (always on top, always interactive)
+  const zl = document.getElementById('zoneLabels');
+  if (zl) {
+    zl.innerHTML = '';
+    if (dividers.length) {
+      const sorted = [...dividers].sort((a,b)=>a-b);
+      const bounds = [0, ...sorted, 1];
+      for (let i = 0; i < bounds.length - 1; i++) {
+        const pct = (bounds[i] + bounds[i+1]) / 2 * 100;
+        const name = st.zoneNames[i] || `Unit ${i+1}`;
+        const el = document.createElement('div');
+        el.className = 'zone-name-label';
+        el.style.left = pct + '%';
+        el.innerHTML = `<span>${name}</span><span class="zone-edit-btn" title="Rename zone">✎</span>`;
+        const rename = (idx => () => {
+          const val = prompt('Zone name:', st.zoneNames[idx] || `Unit ${idx+1}`);
+          if (val && val.trim()) { st.zoneNames[idx] = val.trim(); st.dirty = true; renderDividers(); renderFixtureList(); renderCustomList(); }
+        })(i);
+        el.addEventListener('click', e => { e.stopPropagation(); rename(); });
+        zl.appendChild(el);
+      }
+    }
+  }
+
   if (!dividers.length) { layer.innerHTML = ''; return; }
   const sorted = [...dividers].sort((a,b)=>a-b);
-  const bounds = [0, ...sorted, 1];
   let html = '';
   sorted.forEach(nx => {
     const x = nx * W;
     html += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#f59e0b" stroke-width="2" opacity="0.8"/>`;
   });
-  for (let i = 0; i < bounds.length - 1; i++) {
-    const cx = (bounds[i] + bounds[i+1]) / 2 * W;
-    const label = st.zoneNames[i] || `Unit ${i+1}`;
-    const tw = label.length * 7 + 12;
-    html += `<rect class="zone-label" data-zone="${i}" x="${cx-tw/2}" y="6" width="${tw}" height="18" rx="4" fill="rgba(0,0,0,0.6)" cursor="pointer" pointer-events="all" title="Click to rename"/>`;
-    html += `<text x="${cx}" y="19" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#f59e0b" pointer-events="none">${label}</text>`;
-  }
   layer.innerHTML = html;
-  layer.querySelectorAll('.zone-label').forEach(el => {
-    el.addEventListener('click', e => {
-      e.stopPropagation();
-      const i = parseInt(el.dataset.zone);
-      const val = prompt('Zone name:', st.zoneNames[i] || `Unit ${i+1}`);
-      if (val && val.trim()) {
-        st.zoneNames[i] = val.trim();
-        st.dirty = true;
-        renderDividers(); renderFixtureList(); renderCustomList();
-      }
-    });
-  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════
