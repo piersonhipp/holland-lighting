@@ -929,9 +929,9 @@ function renderLayoutList() {
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
       <button class="layout-menu-btn" title="Options">⋯</button>
       <div class="layout-dropdown">
-        <div class="layout-dd-item">+ Rename</div>
-        <div class="layout-dd-item">📋 Duplicate</div>
-        <div class="layout-dd-item danger">🗑 Delete</div>
+        <div class="layout-dd-item">Rename</div>
+        <div class="layout-dd-item">Duplicate</div>
+        <div class="layout-dd-item danger">Delete</div>
       </div>`;
     item.querySelector('span:first-child').onclick = () => openLayout(name);
     item.querySelector('.layout-menu-btn').onclick = e => {
