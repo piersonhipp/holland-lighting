@@ -1978,7 +1978,16 @@ document.getElementById('saveBtn').onclick = () => { if (st.currentLayout) saveL
 document.getElementById('saveAsBtn').onclick = async () => {
   const n = prompt('Save layout as:');
   if (!n || !n.trim()) return;
-  await saveLayout(n.trim());
+  const trimmed = n.trim();
+  if (st.layouts[trimmed] && trimmed !== st.currentLayout) {
+    const ok = await showConfirm(
+      'Layout already exists',
+      `A layout named "${trimmed}" already exists. Do you want to replace it?`,
+      'Replace'
+    );
+    if (!ok) return;
+  }
+  await saveLayout(trimmed);
 };
 
 function updateSaveBtns() {
