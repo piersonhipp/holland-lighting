@@ -326,9 +326,10 @@
 
   /* Custom stamp dialog */
   #customDialog {
-    display: none; position: absolute; bottom: calc(100% + 6px); left: 0; right: 0;
+    display: none; position: absolute; top: 0; left: calc(100% + 8px);
+    width: 220px;
     background: var(--navy-mid); border: 1px solid var(--border); border-radius: 8px;
-    padding: 12px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 12px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.18);
   }
   #customDialog.open { display: block; }
   .dlg-label { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
@@ -487,18 +488,20 @@
         <div class="section-label">Custom Stamps</div>
         <div id="customList"></div>
         <button class="sidebar-btn" id="catalogBtn">⊕ Choose from Catalog</button>
-        <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
-        <div id="customDialog">
-          <div class="dlg-label">Add Custom Stamp</div>
-          <input class="dlg-input" id="csName" placeholder="Name (e.g. Step Light)" maxlength="20">
-          <input class="dlg-input" id="csLetter" placeholder="Letter (1–2 chars)" maxlength="2">
-          <select class="dlg-select" id="csShape"></select>
-          <div class="dlg-label" style="margin-top:4px">Color</div>
-          <div class="color-row" id="csColorRow"></div>
-          <input type="color" class="color-picker" id="csColorPicker" value="#22C55E">
-          <div class="dlg-row">
-            <button class="dlg-btn" id="csCancelBtn">Cancel</button>
-            <button class="dlg-btn primary" id="csAddBtn">Add</button>
+        <div style="position:relative">
+          <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
+          <div id="customDialog">
+            <div class="dlg-label">Add Custom Stamp</div>
+            <input class="dlg-input" id="csName" placeholder="Name (e.g. Step Light)" maxlength="20">
+            <input class="dlg-input" id="csLetter" placeholder="Letter (1–2 chars)" maxlength="2">
+            <select class="dlg-select" id="csShape"></select>
+            <div class="dlg-label" style="margin-top:4px">Color</div>
+            <div class="color-row" id="csColorRow"></div>
+            <input type="color" class="color-picker" id="csColorPicker" value="#22C55E">
+            <div class="dlg-row">
+              <button class="dlg-btn" id="csCancelBtn">Cancel</button>
+              <button class="dlg-btn primary" id="csAddBtn">Add</button>
+            </div>
           </div>
         </div>
       </div>
