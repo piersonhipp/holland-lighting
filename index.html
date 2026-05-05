@@ -13,15 +13,15 @@
     --navy: #001f35;
     --navy-dark: #001728;
     --navy-mid: #002847;
-    --border: rgba(255,255,255,0.11);
-    --border-light: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.2);
+    --border-light: rgba(255,255,255,0.13);
     --blue: #0275d8;
     --blue-hover: #3498db;
     --green: #10b981;
     --green-hover: #059669;
     --text: #dce8f5;
-    --text-dim: #8ab3cc;
-    --text-muted: #4d7a99;
+    --text-dim: #b0cfe6;
+    --text-muted: #6fa0bc;
     --danger: #ef4444;
     --success: #10b981;
   }
@@ -97,7 +97,7 @@
     display: flex; flex-direction: column; overflow: hidden; padding: 10px 12px;
   }
   .section-label {
-    font-size: 10px; font-weight: 800; color: #7eb3d4; letter-spacing: 0.13em;
+    font-size: 10px; font-weight: 800; color: #9ecfe3; letter-spacing: 0.13em;
     text-transform: uppercase; margin: 14px 0 6px; padding-left: 2px;
   }
   .fixture-row {
@@ -105,7 +105,7 @@
     border-radius: 6px; margin-bottom: 2px; border: 1px solid transparent;
     transition: all 0.12s; color: var(--text-dim); font-size: 13px;
   }
-  .fixture-row:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); }
+  .fixture-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
   .fixture-row.placing { background: rgba(16,185,129,0.15); border-color: var(--green); color: var(--text); }
   .swatch { width: 20px; height: 20px; flex-shrink: 0; }
   .fx-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -133,7 +133,7 @@
   .layout-item {
     display: flex; align-items: center; gap: 6px; padding: 6px 7px;
     border-radius: 5px; cursor: pointer; color: var(--text-dim); font-size: 12px;
-    border: 1px solid transparent; border-bottom: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid transparent; border-bottom: 1px solid rgba(255,255,255,0.11);
     transition: all 0.12s; position: relative;
   }
   .layout-item:last-child { border-bottom-color: transparent; }
@@ -245,7 +245,7 @@
   /* Main canvas area */
   #mainArea { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   #toolbar {
-    background: #00314f; border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 2px solid rgba(0,0,0,0.25);
+    background: #00314f; border-top: 1px solid rgba(255,255,255,0.13); border-bottom: 2px solid rgba(0,0,0,0.3);
     padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
   }
   #pageInfo { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-family: 'DM Mono', monospace; }
