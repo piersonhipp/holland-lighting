@@ -1982,6 +1982,64 @@ function makeLegendCanvas(title, subtitle, stamps) {
   return lc.canvas;
 }
 
+function makeMultiLegendCanvas(zones, subtitle) {
+  const N = zones.length;
+  const COL_W = 2200, LH = 2850, PAD = 80, SW = 90, RH = 180, SY = 260;
+  const LW = COL_W * N;
+  const lc = Object.assign(document.createElement('canvas'), { width: LW, height: LH }).getContext('2d');
+  lc.fillStyle = '#f1f5f9'; lc.fillRect(0, 0, LW, LH);
+
+  zones.forEach((zone, z) => {
+    const ox = z * COL_W;
+    if (z > 0) {
+      lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 3;
+      lc.beginPath(); lc.moveTo(ox, 0); lc.lineTo(ox, LH); lc.stroke();
+    }
+    // Header
+    lc.fillStyle = '#e2e8f0'; lc.fillRect(ox, 0, COL_W, 200);
+    lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 2;
+    lc.beginPath(); lc.moveTo(ox, 200); lc.lineTo(ox + COL_W, 200); lc.stroke();
+    lc.fillStyle = '#1e293b'; lc.font = 'bold 72px sans-serif'; lc.textAlign = 'left'; lc.textBaseline = 'middle';
+    lc.fillText(zone.name, ox + PAD, 100);
+    lc.fillStyle = '#64748b'; lc.font = '38px sans-serif';
+    lc.fillText(subtitle, ox + PAD, 160);
+    // Fixture rows
+    const counts = {};
+    zone.stamps.forEach(s => { counts[s.fixtureId] = (counts[s.fixtureId] || 0) + 1; });
+    const used = allFixtures().filter(f => counts[f.id] > 0);
+    used.forEach((f, idx) => {
+      const y = SY + idx * RH, mid = y + RH / 2, r = SW / 2 - 3;
+      const sx = ox + PAD + SW / 2, sy = mid;
+      lc.fillStyle = idx % 2 === 0 ? '#ffffff' : '#eef2f7';
+      lc.beginPath(); lc.roundRect(ox + PAD - 16, y + 4, COL_W - (PAD - 16) * 2, RH - 8, 8); lc.fill();
+      lc.strokeStyle = '#e2e8f0'; lc.lineWidth = 1;
+      lc.beginPath(); lc.roundRect(ox + PAD - 16, y + 4, COL_W - (PAD - 16) * 2, RH - 8, 8); lc.stroke();
+      lc.globalAlpha = 1; lc.strokeStyle = '#fff'; lc.lineWidth = 3; lc.fillStyle = f.color;
+      drawShape(lc, f.shape, sx, sy, r);
+      lc.fillStyle = '#fff'; lc.font = `bold ${Math.round(SW * 0.38)}px sans-serif`;
+      lc.textAlign = 'center'; lc.textBaseline = 'middle'; lc.fillText(f.letter, sx, sy);
+      lc.fillStyle = '#1e293b'; lc.font = 'bold 52px sans-serif'; lc.textAlign = 'left';
+      lc.fillText(f.label, ox + PAD + SW + 36, mid);
+      lc.textAlign = 'right'; lc.fillStyle = '#475569'; lc.font = 'bold 80px sans-serif';
+      lc.fillText(counts[f.id], ox + COL_W - PAD - 16, mid);
+    });
+    // Total
+    const totalY = SY + used.length * RH + 30;
+    lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 2;
+    lc.beginPath(); lc.moveTo(ox + PAD, totalY); lc.lineTo(ox + COL_W - PAD, totalY); lc.stroke();
+    lc.fillStyle = '#1e293b'; lc.font = 'bold 48px sans-serif'; lc.textAlign = 'left'; lc.textBaseline = 'middle';
+    lc.fillText(`Total: ${zone.stamps.length} fixture${zone.stamps.length !== 1 ? 's' : ''}`, ox + PAD, totalY + 56);
+  });
+
+  // Footer
+  lc.fillStyle = '#e2e8f0'; lc.fillRect(0, LH - 80, LW, 80);
+  lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 1;
+  lc.beginPath(); lc.moveTo(0, LH - 80); lc.lineTo(LW, LH - 80); lc.stroke();
+  lc.fillStyle = '#94a3b8'; lc.font = '30px sans-serif'; lc.textAlign = 'center'; lc.textBaseline = 'middle';
+  lc.fillText(`Holland Homes Lighting Layout  •  ${new Date().toLocaleDateString()}`, LW / 2, LH - 40);
+  return lc.canvas;
+}
+
 async function exportPDF() {
   if(!st.pdfDoc||!st.keptPages.length) return alert('No PDF loaded.');
   const defaultName = (st.currentLayout || st.pdfName || 'lighting-layout');
@@ -1999,9 +2057,9 @@ async function exportPDF() {
   const doc=new jsPDF({orientation:pageOrient,unit:'mm',format:[pageW,pageH]});
   const subtitle = st.pdfName || 'Unnamed Plan';
 
-  // Fit the legend canvas (portrait 2200×2850) centred inside the plan page
+  // Fit canvas centred inside the plan page, preserving aspect ratio
   function _placeLegend(cv) {
-    const lcRatio = 2200/2850;
+    const lcRatio = cv.width / cv.height;
     const pad = Math.min(pageW,pageH)*0.04;
     const aW=pageW-pad*2, aH=pageH-pad*2;
     let iW,iH;
@@ -2011,15 +2069,13 @@ async function exportPDF() {
 
   if (st.dividers.length) {
     syncZoneNames();
-    st.zoneNames.forEach((zoneName, z) => {
-      const zoneStamps = st.stamps.filter(s => getStampZone(s) === z);
-      const cv = makeLegendCanvas(`${zoneName} — Fixture Legend`, subtitle, zoneStamps);
-      if (z > 0) doc.addPage([pageW,pageH],pageOrient);
-      _placeLegend(cv);
-    });
+    const zones = st.zoneNames.map((zoneName, z) => ({
+      name: zoneName,
+      stamps: st.stamps.filter(s => getStampZone(s) === z),
+    }));
+    _placeLegend(makeMultiLegendCanvas(zones, subtitle));
   } else {
-    const cv = makeLegendCanvas('Lighting Layout — Legend', subtitle, st.stamps);
-    _placeLegend(cv);
+    _placeLegend(makeLegendCanvas('Lighting Layout — Legend', subtitle, st.stamps));
   }
 
   const _wrap=document.getElementById('canvasWrap');
