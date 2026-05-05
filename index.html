@@ -2002,11 +2002,16 @@ canvasWrap.addEventListener('drop', async e => {
 (function() {
   const resizer = document.getElementById('sidebarResizer');
   const sidebar = document.getElementById('sidebar');
-  const MIN = 160, MAX = 480;
+  const MIN = 160, MAX = 480, KEY = 'hl_sidebar_width';
 
-  function updateDialogLeft(w) {
+  function applyWidth(w) {
+    sidebar.style.width = w + 'px';
     document.getElementById('customDialog').style.left = (w + 20) + 'px';
   }
+
+  // Restore saved width
+  const saved = parseInt(localStorage.getItem(KEY));
+  if (saved && saved >= MIN && saved <= MAX) applyWidth(saved);
 
   resizer.addEventListener('mousedown', e => {
     e.preventDefault();
@@ -2015,14 +2020,13 @@ canvasWrap.addEventListener('drop', async e => {
     document.body.style.userSelect = 'none';
 
     function onMove(e) {
-      const w = Math.min(MAX, Math.max(MIN, e.clientX));
-      sidebar.style.width = w + 'px';
-      updateDialogLeft(w);
+      applyWidth(Math.min(MAX, Math.max(MIN, e.clientX)));
     }
     function onUp() {
       resizer.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      localStorage.setItem(KEY, parseInt(sidebar.style.width));
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
     }
