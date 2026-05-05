@@ -270,7 +270,7 @@
   .tool-number:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); }
   .tool-select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); outline: none; }
   .dlg-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.35); }
-  .tool-btn.flipped { background: rgba(37,99,235,0.25); color: var(--blue-hover); border-color: var(--blue); }
+  .tool-btn.flipped, .tool-btn.focus-active { background: rgba(37,99,235,0.25); color: var(--blue-hover); border-color: var(--blue); }
   #canvasWrap {
     flex: 1; overflow: auto; background: #b8c4d4; position: relative;
     display: flex; align-items: flex-start; padding: 20px;
@@ -552,6 +552,8 @@
         <button class="tool-btn" id="pasteStampsBtn" disabled title="Paste stamps onto current page (Ctrl+V)">⎘ Paste</button>
         <div class="sep"></div>
         <button class="tool-btn" id="flipBtn" title="Flip current page horizontally">⇄ Flip</button>
+        <div class="sep"></div>
+        <button class="tool-btn" id="focusBtn" title="Draw a focus area — grays out the rest of the page">⊡ Focus Area</button>
       </div>
       <div id="canvasWrap">
         <div id="emptyState">
@@ -869,6 +871,7 @@ let st = {
   layouts: {}, currentLayout: null,
   clipboard: [],
   flippedPages: [],
+  focusBox: null,
   dirty: false,
 };
 function curPage() { return st.keptPages[st.pageIdx]; }
@@ -962,6 +965,7 @@ async function saveLayout(name) {
     stampSize: st.stampSize,
     customStamps: JSON.parse(JSON.stringify(st.customStamps)),
     flippedPages: [...st.flippedPages],
+    focusBox: st.focusBox ? {...st.focusBox} : null,
   };
 
   // Upload PDF if we have one (best-effort — layout saves even if upload fails)
@@ -1085,6 +1089,7 @@ async function openLayout(name) {
     st.stampSize = layout.stampSize || 24;
     st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
     st.flippedPages = layout.flippedPages ? [...layout.flippedPages] : [];
+    st.focusBox = layout.focusBox || null;
     st.currentLayout = name;
     st.dirty = false;
     st.pageIdx = 0;
@@ -1094,6 +1099,7 @@ async function openLayout(name) {
     renderCustomList();
     renderLayoutList();
     renderLegend();
+    renderFocusBox();
   }
 
   // If same PDF is already loaded, just apply stamps
@@ -1362,10 +1368,12 @@ function ensureCanvas() {
   if (es) es.style.display = 'none';
   const container = document.createElement('div'); container.id='canvasContainer';
   const pdfCv = document.createElement('canvas'); pdfCv.id='pdfCanvas'; pdfCv.style.cursor='default';
+  const fl = document.createElementNS('http://www.w3.org/2000/svg','svg'); fl.id='focusLayer';
+  fl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
   const sl = document.createElement('div'); sl.id='stampLayer';
   const gl = document.createElementNS('http://www.w3.org/2000/svg','svg'); gl.id='guideLayer';
   gl.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;';
-  container.appendChild(pdfCv); container.appendChild(sl); container.appendChild(gl);
+  container.appendChild(pdfCv); container.appendChild(fl); container.appendChild(sl); container.appendChild(gl);
   wrap.appendChild(container);
   bindCanvasEvents(pdfCv, sl, container);
 }
@@ -1395,6 +1403,7 @@ async function renderPdfPage() {
   document.getElementById('nextPage').disabled=st.pageIdx>=st.keptPages.length-1;
   document.getElementById('flipBtn').classList.toggle('flipped', isFlipped());
   renderStamps();
+  renderFocusBox();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1438,6 +1447,30 @@ function renderStamps() {
   });
   layer.style.pointerEvents=st.mode==='place'?'none':'all';
   updateCopyPasteBtns();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// FOCUS BOX
+// ══════════════════════════════════════════════════════════════════════════
+function renderFocusBox() {
+  const layer = document.getElementById('focusLayer'); if (!layer) return;
+  const cv = document.getElementById('pdfCanvas'); if (!cv) return;
+  const W = cv.offsetWidth, H = cv.offsetHeight;
+  layer.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  layer.setAttribute('width', W); layer.setAttribute('height', H);
+  const btn = document.getElementById('focusBtn');
+  if (!st.focusBox) {
+    layer.innerHTML = '';
+    if (btn) btn.classList.remove('focus-active');
+    return;
+  }
+  const {nx1,ny1,nx2,ny2} = st.focusBox;
+  const x1=nx1*W, y1=ny1*H, x2=nx2*W, y2=ny2*H;
+  layer.innerHTML = `
+    <path d="M0,0 H${W} V${H} H0 Z M${x1},${y1} H${x2} V${y2} H${x1} Z" fill="rgba(0,0,0,0.5)" fill-rule="evenodd"/>
+    <rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-dasharray="8 4"/>
+  `;
+  if (btn) btn.classList.add('focus-active');
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1538,6 +1571,44 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     renderStamps();
   });
   document.addEventListener('pointerup',()=>{ if(st.dragState) st.dirty=true; st.dragState=null; });
+
+  // Focus box drawing
+  let focusDrawing=false, focusStart=null;
+  pdfCv.addEventListener('pointerdown',e=>{
+    if(st.mode!=='focus') return;
+    e.preventDefault(); e.stopPropagation();
+    const r=pdfCv.getBoundingClientRect();
+    focusDrawing=true;
+    focusStart={nx:(e.clientX-r.left)/r.width, ny:(e.clientY-r.top)/r.height};
+    pdfCv.setPointerCapture(e.pointerId);
+  });
+  pdfCv.addEventListener('pointermove',e=>{
+    if(!focusDrawing) return;
+    const r=pdfCv.getBoundingClientRect();
+    const cur={nx:(e.clientX-r.left)/r.width, ny:(e.clientY-r.top)/r.height};
+    const layer=document.getElementById('focusLayer'); if(!layer) return;
+    const W=r.width, H=r.height;
+    layer.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    layer.setAttribute('width',W); layer.setAttribute('height',H);
+    const x1=Math.min(focusStart.nx,cur.nx)*W, y1=Math.min(focusStart.ny,cur.ny)*H;
+    const x2=Math.max(focusStart.nx,cur.nx)*W, y2=Math.max(focusStart.ny,cur.ny)*H;
+    layer.innerHTML=`
+      <path d="M0,0 H${W} V${H} H0 Z M${x1},${y1} H${x2} V${y2} H${x1} Z" fill="rgba(0,0,0,0.5)" fill-rule="evenodd"/>
+      <rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-dasharray="8 4"/>
+    `;
+  });
+  pdfCv.addEventListener('pointerup',e=>{
+    if(!focusDrawing) return;
+    focusDrawing=false;
+    const r=pdfCv.getBoundingClientRect();
+    const cur={nx:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)), ny:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
+    const nx1=Math.min(focusStart.nx,cur.nx), ny1=Math.min(focusStart.ny,cur.ny);
+    const nx2=Math.max(focusStart.nx,cur.nx), ny2=Math.max(focusStart.ny,cur.ny);
+    if((nx2-nx1)>0.02&&(ny2-ny1)>0.02){ st.focusBox={nx1,ny1,nx2,ny2}; st.dirty=true; }
+    st.mode='select'; pdfCv.style.cursor='default';
+    document.getElementById('stampLayer').style.pointerEvents='all';
+    renderFocusBox();
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1582,6 +1653,12 @@ document.addEventListener('keydown',e=>{
   if(!st.user) return;
   const inInput=document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
   if(e.key==='Escape'){
+    if(st.mode==='focus'){
+      st.mode='select';
+      const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='default';
+      const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='all';
+      renderFocusBox(); return;
+    }
     if(st.mode==='place'){deactivatePlace();return;}
     if(st.snaps.length){hideGuide();return;}
     if(st.selectedIds.size){st.selectedIds.clear();renderStamps();return;}
@@ -1947,6 +2024,25 @@ document.getElementById('flipBtn').onclick=async()=>{
   if(i===-1) st.flippedPages.push(p); else st.flippedPages.splice(i,1);
   st.dirty=true; await renderPdfPage();
 };
+document.getElementById('focusBtn').onclick=()=>{
+  if(st.mode==='focus'){
+    // cancel drawing in progress
+    st.mode='select';
+    const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='default';
+    const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='all';
+    renderFocusBox(); return;
+  }
+  if(st.focusBox){
+    // clear existing box
+    st.focusBox=null; st.dirty=true; renderFocusBox(); return;
+  }
+  if(!st.pdfDoc) return;
+  deactivatePlace();
+  st.mode='focus';
+  const pc=document.getElementById('pdfCanvas'); if(pc) pc.style.cursor='crosshair';
+  const sl=document.getElementById('stampLayer'); if(sl) sl.style.pointerEvents='none';
+  document.getElementById('focusBtn').classList.add('focus-active');
+};
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 async function applyZoom(scale) {
@@ -1981,7 +2077,7 @@ async function exitToHome() {
   }
   st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
-  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dirty = false;
+  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.focusBox = null; st.dirty = false;
   st.scale = 1; st.mode = 'select'; st.snaps = []; st.dragState = null;
   deactivatePlace();
   const cc = document.getElementById('canvasContainer');
