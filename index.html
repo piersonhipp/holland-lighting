@@ -577,6 +577,9 @@
         <span class="tool-label">Size</span>
         <input type="number" class="tool-number" id="stampSizeInput" min="8" max="80" value="24">
         <div class="sep"></div>
+        <button class="tool-btn" id="undoBtn" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+        <button class="tool-btn" id="redoBtn" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+        <div class="sep"></div>
         <button class="tool-btn" id="copyStampsBtn" disabled title="Copy selected stamps (Ctrl+C)">⎘ Copy</button>
         <button class="tool-btn" id="pasteStampsBtn" disabled title="Paste stamps onto current page (Ctrl+V)">⎘ Paste</button>
         <div class="sep"></div>
@@ -911,6 +914,70 @@ function isFlipped() { return st.flippedPages.includes(curPage()); }
 function allFixtures() { return [...FIXTURES, ...st.customStamps]; }
 
 // ══════════════════════════════════════════════════════════════════════════
+// UNDO / REDO
+// ══════════════════════════════════════════════════════════════════════════
+let _history = [];
+let _historyIdx = -1;
+
+function snapshotState() {
+  return {
+    stamps: JSON.parse(JSON.stringify(st.stamps)),
+    dividers: [...st.dividers],
+    zoneNames: [...st.zoneNames],
+    pagePositions: JSON.parse(JSON.stringify(st.pagePositions)),
+    flippedPages: [...st.flippedPages],
+  };
+}
+function updateUndoRedoBtns() {
+  const u = document.getElementById('undoBtn');
+  const r = document.getElementById('redoBtn');
+  if (u) u.disabled = _historyIdx <= 0;
+  if (r) r.disabled = _historyIdx >= _history.length - 1;
+}
+function pushHistory() {
+  _history.splice(_historyIdx + 1);
+  _history.push(snapshotState());
+  if (_history.length > 50) { _history.shift(); }
+  _historyIdx = _history.length - 1;
+  updateUndoRedoBtns();
+}
+function applySnapshot(snap) {
+  st.stamps = JSON.parse(JSON.stringify(snap.stamps));
+  st.dividers = [...snap.dividers];
+  st.zoneNames = [...snap.zoneNames];
+  st.pagePositions = JSON.parse(JSON.stringify(snap.pagePositions));
+  st.flippedPages = [...snap.flippedPages];
+  st.selectedIds.clear();
+  st.dirty = true;
+  renderPdfPage();
+  renderFixtureList();
+  renderCustomList();
+  renderLegend();
+}
+function undo() {
+  if (_historyIdx <= 0) return;
+  _historyIdx--;
+  applySnapshot(_history[_historyIdx]);
+  updateUndoRedoBtns();
+}
+function redo() {
+  if (_historyIdx >= _history.length - 1) return;
+  _historyIdx++;
+  applySnapshot(_history[_historyIdx]);
+  updateUndoRedoBtns();
+}
+function initHistory() {
+  _history = [snapshotState()];
+  _historyIdx = 0;
+  updateUndoRedoBtns();
+}
+function clearHistory() {
+  _history = [];
+  _historyIdx = -1;
+  updateUndoRedoBtns();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════════════════════════════
 function showLoginView() {
@@ -1140,7 +1207,7 @@ async function openLayout(name) {
   }
 
   // If same PDF is already loaded, just apply stamps
-  if (st.pdfDoc && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); return; }
+  if (st.pdfDoc && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); initHistory(); return; }
 
   // Try loading PDF from Supabase storage
   if (layout.pdf_path) {
@@ -1155,6 +1222,7 @@ async function openLayout(name) {
       apply();
       ensureCanvas();
       renderPdfPage();
+      initHistory();
       return;
     }
   }
@@ -1164,7 +1232,7 @@ async function openLayout(name) {
   document.getElementById('fileInput').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     await handleFileUpload(file);
-    apply(); ensureCanvas(); renderPdfPage();
+    apply(); ensureCanvas(); renderPdfPage(); initHistory();
     bindFileInput();
     e.target.value = '';
   };
@@ -1340,7 +1408,7 @@ function bindFileInput() {
     e.target.value = '';
     if (!kept || !kept.length) return;
     st.keptPages = kept; st.pageIdx = 0;
-    ensureCanvas(); renderPdfPage();
+    ensureCanvas(); renderPdfPage(); initHistory();
     renderFixtureList(); renderCustomList(); renderLayoutList();
   };
 }
@@ -1568,7 +1636,7 @@ function renderDividers() {
         el.innerHTML = `<span>${name}</span><span class="zone-edit-btn" title="Rename zone">✎</span>`;
         const rename = (idx => () => {
           const val = prompt('Zone name:', st.zoneNames[idx] || `Unit ${idx+1}`);
-          if (val && val.trim()) { st.zoneNames[idx] = val.trim(); st.dirty = true; renderDividers(); renderFixtureList(); renderCustomList(); }
+          if (val && val.trim()) { st.zoneNames[idx] = val.trim(); pushHistory(); st.dirty = true; renderDividers(); renderFixtureList(); renderCustomList(); }
         })(i);
         el.addEventListener('click', e => { e.stopPropagation(); rename(); });
         zl.appendChild(el);
@@ -1634,6 +1702,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     }
     const rawNx=px/W;
     st.stamps.push({id:Date.now()+Math.random(),fixtureId:st.activeFixture,nx:isFlipped()?1-rawNx:rawNx,ny:py/H,origPage:curPage()});
+    pushHistory();
     st.dirty = true;
     renderStamps(); renderLegend(); hideGuide();
   });
@@ -1683,7 +1752,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     }
     renderStamps();
   });
-  document.addEventListener('pointerup',()=>{ if(st.dragState) st.dirty=true; st.dragState=null; });
+  document.addEventListener('pointerup',()=>{ if(st.dragState) { pushHistory(); st.dirty=true; } st.dragState=null; });
 
   // Divider placement + drag
   let draggingDividerIdx = -1;
@@ -1732,6 +1801,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
       }
     }
     draggingDividerIdx = -1;
+    pushHistory();
     st.dirty = true;
     renderDividers(); renderFixtureList(); renderCustomList();
   });
@@ -1766,12 +1836,15 @@ function pasteStamps() {
     return ns;
   });
   st.stamps.push(...newStamps);
+  pushHistory();
   st.dirty = true;
   renderStamps(); renderLegend();
 }
 
 document.getElementById('copyStampsBtn').onclick = copyStamps;
 document.getElementById('pasteStampsBtn').onclick = pasteStamps;
+document.getElementById('undoBtn').onclick = undo;
+document.getElementById('redoBtn').onclick = redo;
 
 // ══════════════════════════════════════════════════════════════════════════
 // KEYBOARD
@@ -1793,9 +1866,12 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '&&!inInput){e.preventDefault();if(st.mode==='place')deactivatePlace();return;}
   if((e.key==='Delete'||e.key==='Backspace')&&st.selectedIds.size&&!inInput){
     st.stamps=st.stamps.filter(s=>!st.selectedIds.has(s.id));
+    pushHistory();
     st.dirty = true;
     st.selectedIds.clear(); renderStamps(); renderLegend();
   }
+  if(e.key==='z'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&!inInput){ e.preventDefault(); undo(); return; }
+  if(((e.key==='y'&&(e.ctrlKey||e.metaKey))||(e.key==='z'&&(e.ctrlKey||e.metaKey)&&e.shiftKey))&&!inInput){ e.preventDefault(); redo(); return; }
   if(e.key==='c'&&(e.ctrlKey||e.metaKey)&&!inInput){ e.preventDefault(); copyStamps(); }
   if(e.key==='v'&&(e.ctrlKey||e.metaKey)&&!inInput){ e.preventDefault(); pasteStamps(); }
 });
@@ -2205,7 +2281,7 @@ document.getElementById('flipBtn').onclick=async()=>{
   const p=curPage(); if(!p) return;
   const i=st.flippedPages.indexOf(p);
   if(i===-1) st.flippedPages.push(p); else st.flippedPages.splice(i,1);
-  st.dirty=true; await renderPdfPage();
+  pushHistory(); st.dirty=true; await renderPdfPage();
 };
 document.getElementById('dividerBtn').onclick=()=>{
   if(st.mode==='divider'){
@@ -2257,6 +2333,7 @@ async function exitToHome() {
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
   st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dividers = []; st.zoneNames = []; st.pagePositions = {}; st.dirty = false;
   st.scale = 1; st.zoomPct = 100; st.mode = 'select'; st.snaps = []; st.dragState = null;
+  clearHistory();
   deactivatePlace();
   const cc = document.getElementById('canvasContainer');
   if (cc) cc.remove();
@@ -2372,7 +2449,7 @@ canvasWrap.addEventListener('drop', async e => {
   const kept = await showPagePicker(st.pdfDoc);
   if (!kept || !kept.length) return;
   st.keptPages = kept; st.pageIdx = 0;
-  ensureCanvas(); renderPdfPage();
+  ensureCanvas(); renderPdfPage(); initHistory();
 });
 // ── SIDEBAR RESIZE ──────────────────────────────────────────────────────────
 (function() {
