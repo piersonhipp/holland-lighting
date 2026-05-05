@@ -1844,30 +1844,19 @@ async function loadJsPDF(){
   });
 }
 
-async function exportPDF() {
-  if(!st.pdfDoc||!st.keptPages.length) return alert('No PDF loaded.');
-  const defaultName = (st.currentLayout || st.pdfName || 'lighting-layout');
-  const exportName = prompt('Save PDF as:', defaultName);
-  if(!exportName || !exportName.trim()) return;
-  let jsPDF; try{jsPDF=await loadJsPDF();}catch(e){return alert('Could not load jsPDF: '+e.message);}
-
-  // Legend page — canvas sized to letter aspect ratio (8.5×11 = 0.7727)
+function makeLegendCanvas(title, subtitle, stamps) {
   const LW=2200,LH=2850,lc=Object.assign(document.createElement('canvas'),{width:LW,height:LH}).getContext('2d');
-  // Background
   lc.fillStyle='#f1f5f9';lc.fillRect(0,0,LW,LH);
-  // Header bar
   lc.fillStyle='#e2e8f0';lc.fillRect(0,0,LW,200);
   lc.strokeStyle='#cbd5e1';lc.lineWidth=2;lc.beginPath();lc.moveTo(0,200);lc.lineTo(LW,200);lc.stroke();
   lc.fillStyle='#1e293b';lc.font='bold 72px sans-serif';lc.textAlign='left';lc.textBaseline='middle';
-  lc.fillText('Lighting Layout — Legend',80,100);
-  lc.fillStyle='#64748b';lc.font='38px sans-serif';lc.fillText(st.pdfName||'Unnamed Plan',80,160);
-
-  const counts={};st.stamps.forEach(s=>{counts[s.fixtureId]=(counts[s.fixtureId]||0)+1;});
+  lc.fillText(title,80,100);
+  lc.fillStyle='#64748b';lc.font='38px sans-serif';lc.fillText(subtitle,80,160);
+  const counts={};stamps.forEach(s=>{counts[s.fixtureId]=(counts[s.fixtureId]||0)+1;});
   const used=allFixtures().filter(f=>counts[f.id]>0);
   const RH=180,SY=280,SW=90,PAD=80;
   used.forEach((f,idx)=>{
     const y=SY+idx*RH,mid=y+RH/2,r=SW/2-3,sx=PAD+SW/2,sy=mid;
-    // Alternating row shading
     lc.fillStyle=idx%2===0?'#ffffff':'#eef2f7';
     lc.beginPath();lc.roundRect(PAD-16,y+4,LW-(PAD-16)*2,RH-8,8);lc.fill();
     lc.strokeStyle='#e2e8f0';lc.lineWidth=1;lc.beginPath();lc.roundRect(PAD-16,y+4,LW-(PAD-16)*2,RH-8,8);lc.stroke();
@@ -1880,15 +1869,36 @@ async function exportPDF() {
   const totalY=SY+used.length*RH+30;
   lc.strokeStyle='#cbd5e1';lc.lineWidth=2;lc.beginPath();lc.moveTo(80,totalY);lc.lineTo(LW-80,totalY);lc.stroke();
   lc.fillStyle='#1e293b';lc.font='bold 48px sans-serif';lc.textAlign='left';lc.textBaseline='middle';
-  lc.fillText(`Total fixtures: ${st.stamps.length}`,80,totalY+56);
-  // Footer
+  lc.fillText(`Total fixtures: ${stamps.length}`,80,totalY+56);
   lc.fillStyle='#e2e8f0';lc.fillRect(0,LH-80,LW,80);
   lc.strokeStyle='#cbd5e1';lc.lineWidth=1;lc.beginPath();lc.moveTo(0,LH-80);lc.lineTo(LW,LH-80);lc.stroke();
   lc.fillStyle='#94a3b8';lc.font='30px sans-serif';lc.textAlign='center';lc.textBaseline='middle';
   lc.fillText(`Holland Homes Lighting Layout  •  ${new Date().toLocaleDateString()}`,LW/2,LH-40);
+  return lc.canvas;
+}
+
+async function exportPDF() {
+  if(!st.pdfDoc||!st.keptPages.length) return alert('No PDF loaded.');
+  const defaultName = (st.currentLayout || st.pdfName || 'lighting-layout');
+  const exportName = prompt('Save PDF as:', defaultName);
+  if(!exportName || !exportName.trim()) return;
+  let jsPDF; try{jsPDF=await loadJsPDF();}catch(e){return alert('Could not load jsPDF: '+e.message);}
 
   const doc=new jsPDF({orientation:'p',unit:'mm',format:'letter'});
-  doc.addImage(lc.canvas.toDataURL('image/png'),'PNG',0,0,216,279);
+  const subtitle = st.pdfName || 'Unnamed Plan';
+
+  if (st.dividers.length) {
+    syncZoneNames();
+    st.zoneNames.forEach((zoneName, z) => {
+      const zoneStamps = st.stamps.filter(s => getStampZone(s) === z);
+      const cv = makeLegendCanvas(`${zoneName} — Fixture Legend`, subtitle, zoneStamps);
+      if (z > 0) doc.addPage([216,279],'p');
+      doc.addImage(cv.toDataURL('image/png'),'PNG',0,0,216,279);
+    });
+  } else {
+    const cv = makeLegendCanvas('Lighting Layout — Legend', subtitle, st.stamps);
+    doc.addImage(cv.toDataURL('image/png'),'PNG',0,0,216,279);
+  }
 
   for(let i=0;i<st.keptPages.length;i++){
     const orig=st.keptPages[i],page=await st.pdfDoc.getPage(orig),vp=page.getViewport({scale:2});
@@ -1911,6 +1921,30 @@ async function exportPDF() {
       ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(f.letter,dx,dy);
       ctx.restore();
     });
+    // Draw dividers on the floor plan page
+    if(st.dividers.length){
+      const sorted=[...st.dividers].sort((a,b)=>a-b);
+      const bounds=[0,...sorted,1];
+      ctx.save();
+      sorted.forEach(nx=>{
+        const x=nx*vp.width;
+        ctx.strokeStyle='#f59e0b';ctx.lineWidth=4;ctx.globalAlpha=0.85;
+        ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,vp.height);ctx.stroke();
+      });
+      ctx.globalAlpha=1;
+      const fs=Math.max(20,Math.round(vp.width*0.016));
+      ctx.font=`700 ${fs}px sans-serif`;
+      for(let z=0;z<bounds.length-1;z++){
+        const cx=(bounds[z]+bounds[z+1])/2*vp.width;
+        const label=st.zoneNames[z]||`Unit ${z+1}`;
+        const tw=ctx.measureText(label).width;
+        ctx.fillStyle='rgba(0,0,0,0.65)';
+        ctx.beginPath();ctx.roundRect(cx-tw/2-10,10,tw+20,fs+12,5);ctx.fill();
+        ctx.fillStyle='#f59e0b';ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.fillText(label,cx,16);
+      }
+      ctx.restore();
+    }
     const pW=vp.width*.264583,pH=vp.height*.264583;
     doc.addPage([pW,pH],pW>pH?'l':'p');
     doc.addImage(oc.toDataURL('image/png'),'PNG',0,0,pW,pH);
