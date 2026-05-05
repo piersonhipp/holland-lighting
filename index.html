@@ -104,12 +104,12 @@
   .fixture-row {
     display: flex; align-items: center; gap: 8px; padding: 6px 8px;
     border-radius: 6px; margin-bottom: 2px; border: 1px solid transparent;
-    transition: all 0.12s; color: var(--text-dim); font-size: 13px;
+    transition: all 0.12s; color: var(--text); font-size: 13px; cursor: pointer;
   }
   .fixture-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
   .fixture-row.placing { background: rgba(16,185,129,0.15); border-color: var(--green); color: var(--text); }
   .swatch { width: 20px; height: 20px; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-  .fx-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fx-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
   .fx-count { font-size: 12px; font-weight: 600; color: var(--text); min-width: 20px; text-align: right; flex-shrink: 0; }
   .fx-count.zero { color: rgba(255,255,255,0.18); }
   .place-btn {
@@ -1141,16 +1141,16 @@ function stampSVG(f, size, selected = false) {
   const s = size, hs = s/2, c = f.color;
   const glow = selected ? `filter:drop-shadow(0 0 4px ${c})` : '';
   let shape = '';
-  if (f.shape==='circle') shape=`<circle cx="${hs}" cy="${hs}" r="${hs-1.5}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
-  else if (f.shape==='square') shape=`<rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="3" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
-  else if (f.shape==='roundedrect') shape=`<rect x="1.5" y="${s*.25}" width="${s-3}" height="${s*.5}" rx="${s*.15}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
-  else if (f.shape==='diamond') shape=`<polygon points="${hs},1.5 ${s-1.5},${hs} ${hs},${s-1.5} 1.5,${hs}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
-  else if (f.shape==='triangle') shape=`<polygon points="${hs},1.5 ${s-1.5},${s-1.5} 1.5,${s-1.5}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
-  else if (f.shape==='plus') { const t=s*.22,o=s*.08; shape=`<path d="M${hs-t},${o} L${hs+t},${o} L${hs+t},${hs-t} L${s-o},${hs-t} L${s-o},${hs+t} L${hs+t},${hs+t} L${hs+t},${s-o} L${hs-t},${s-o} L${hs-t},${hs+t} L${o},${hs+t} L${o},${hs-t} L${hs-t},${hs-t} Z" fill="${c}" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>` }
-  else if (f.shape==='hexagon') { const r=hs-1.5,pts=Array.from({length:6},(_,i)=>{const a=(Math.PI/180)*(60*i-30);return`${hs+r*Math.cos(a)},${hs+r*Math.sin(a)}`;}).join(' '); shape=`<polygon points="${pts}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`; }
+  if (f.shape==='circle') shape=`<circle cx="${hs}" cy="${hs}" r="${hs-1.5}" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='square') shape=`<rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="3" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='roundedrect') shape=`<rect x="1.5" y="${s*.25}" width="${s-3}" height="${s*.5}" rx="${s*.15}" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='diamond') shape=`<polygon points="${hs},1.5 ${s-1.5},${hs} ${hs},${s-1.5} 1.5,${hs}" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='triangle') shape=`<polygon points="${hs},1.5 ${s-1.5},${s-1.5} 1.5,${s-1.5}" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`;
+  else if (f.shape==='plus') { const t=s*.22,o=s*.08; shape=`<path d="M${hs-t},${o} L${hs+t},${o} L${hs+t},${hs-t} L${s-o},${hs-t} L${s-o},${hs+t} L${hs+t},${hs+t} L${hs+t},${s-o} L${hs-t},${s-o} L${hs-t},${hs+t} L${o},${hs+t} L${o},${hs-t} L${hs-t},${hs-t} Z" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>` }
+  else if (f.shape==='hexagon') { const r=hs-1.5,pts=Array.from({length:6},(_,i)=>{const a=(Math.PI/180)*(60*i-30);return`${hs+r*Math.cos(a)},${hs+r*Math.sin(a)}`;}).join(' '); shape=`<polygon points="${pts}" fill="${c}" fill-opacity="0.75" stroke="#fff" stroke-width="1.5"/>`; }
   const fs = Math.max(7, Math.round(s*.38));
   const textY = f.shape === 'triangle' ? Math.round(s * 0.62) : hs;
-  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="${glow}" xmlns="http://www.w3.org/2000/svg" opacity="0.70">
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="${glow}" xmlns="http://www.w3.org/2000/svg">
     ${shape}
     <text x="${hs}" y="${textY}" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${f.letter}</text>
   </svg>`;
@@ -1176,6 +1176,7 @@ function renderFixtureList() {
       <span class="fx-count${count?'':' zero'}">${count||'—'}</span>
       <button class="place-btn${placing?' active':''}" title="Place ${f.label}">+</button>
     `;
+    row.addEventListener('click', () => placing ? deactivatePlace() : activatePlace(f.id));
     row.querySelector('.place-btn').addEventListener('click', e => {
       e.stopPropagation();
       placing ? deactivatePlace() : activatePlace(f.id);
@@ -1203,6 +1204,7 @@ function renderCustomList() {
       <button class="place-btn${placing?' active':''}" title="Place">+</button>
       <button class="place-btn" title="Delete" style="color:#f87171">×</button>
     `;
+    row.addEventListener('click', () => placing ? deactivatePlace() : activatePlace(cs.id));
     const btns = row.querySelectorAll('.place-btn');
     btns[0].addEventListener('click', e => { e.stopPropagation(); placing?deactivatePlace():activatePlace(cs.id); });
     btns[1].addEventListener('click', e => {
