@@ -235,6 +235,12 @@
   }
   .sidebar-btn:hover { background: #dbeafe; color: var(--blue); border-color: var(--blue); }
 
+  #sidebarResizer {
+    width: 5px; flex-shrink: 0; cursor: col-resize; background: transparent;
+    transition: background 0.15s; z-index: 10; position: relative;
+  }
+  #sidebarResizer:hover, #sidebarResizer.dragging { background: var(--blue); }
+
   /* Main canvas area */
   #mainArea { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   #toolbar {
@@ -517,6 +523,7 @@
         </div>
       </div>
     </div>
+    <div id="sidebarResizer"></div>
     <div id="mainArea">
       <div id="toolbar">
         <span id="pageInfo">No PDF loaded</span>
@@ -1991,6 +1998,38 @@ canvasWrap.addEventListener('drop', async e => {
   st.keptPages = kept; st.pageIdx = 0;
   ensureCanvas(); renderPdfPage();
 });
+// ── SIDEBAR RESIZE ──────────────────────────────────────────────────────────
+(function() {
+  const resizer = document.getElementById('sidebarResizer');
+  const sidebar = document.getElementById('sidebar');
+  const MIN = 160, MAX = 480;
+
+  function updateDialogLeft(w) {
+    document.getElementById('customDialog').style.left = (w + 20) + 'px';
+  }
+
+  resizer.addEventListener('mousedown', e => {
+    e.preventDefault();
+    resizer.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMove(e) {
+      const w = Math.min(MAX, Math.max(MIN, e.clientX));
+      sidebar.style.width = w + 'px';
+      updateDialogLeft(w);
+    }
+    function onUp() {
+      resizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+})();
 </script>
 </body>
 </html>
