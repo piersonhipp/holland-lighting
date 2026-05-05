@@ -286,10 +286,21 @@
   }
   #canvasWrap.drag-over #dropOverlay { display: flex; }
   #renderSpinner {
-    display: none; position: absolute; top: 20px; left: 20px;
-    width: 22px; height: 22px; border-radius: 50%; z-index: 200; pointer-events: none;
-    border: 3px solid rgba(50,50,50,0.18); border-top-color: rgba(50,50,50,0.75);
+    display: none; position: absolute; top: 16px; left: 16px;
+    z-index: 200; pointer-events: none;
+    background: rgba(30,30,30,0.82); border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 8px; padding: 7px 12px;
+    display: none; align-items: center; gap: 8px;
+    backdrop-filter: blur(4px);
+  }
+  #renderSpinner .spin-wheel {
+    width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid rgba(200,200,200,0.2); border-top-color: rgba(200,200,200,0.85);
     animation: spin 0.65s linear infinite;
+  }
+  #renderSpinner .spin-label {
+    font-size: 11px; font-weight: 600; color: rgba(200,200,200,0.9);
+    font-family: 'DM Sans', sans-serif; letter-spacing: 0.03em;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   #pdfCanvas { display: block; cursor: default; }
@@ -583,7 +594,7 @@
           <div style="font-size:14px;font-weight:500;color:#4a6278">or drag and drop a PDF anywhere</div>
         </div>
         <div id="dropOverlay"></div>
-        <div id="renderSpinner"></div>
+        <div id="renderSpinner"><div class="spin-wheel"></div><span class="spin-label">Rendering</span></div>
       </div>
     </div>
   </div>
@@ -1416,7 +1427,7 @@ async function renderPdfPage() {
   if (_renderTask) { _renderTask.cancel(); _renderTask = null; }
 
   const spinner = document.getElementById('renderSpinner');
-  if (spinner) spinner.style.display = 'block';
+  if (spinner) spinner.style.display = 'flex';
 
   ensureCanvas();
   const page = await st.pdfDoc.getPage(orig);
