@@ -755,6 +755,28 @@ async function duplicateLayout(name) {
   }
 }
 
+async function renameLayout(name) {
+  const newName = prompt('Rename layout to:', name);
+  if (!newName || !newName.trim()) return;
+  const trimmed = newName.trim();
+  if (trimmed === name) return;
+  if (st.layouts[trimmed]) { alert(`A layout named "${trimmed}" already exists.`); return; }
+  const overlay = document.getElementById('saveOverlay');
+  overlay.classList.add('active');
+  try {
+    const { error } = await sb.from('layouts').update({ name: trimmed }).eq('name', name);
+    if (error) { alert('Rename failed: ' + error.message); return; }
+    st.layouts[trimmed] = st.layouts[name];
+    delete st.layouts[name];
+    if (st.currentLayout === name) st.currentLayout = trimmed;
+    renderLayoutList();
+  } catch (e) {
+    alert('Rename error: ' + e.message);
+  } finally {
+    overlay.classList.remove('active');
+  }
+}
+
 async function openLayout(name) {
   const layout = st.layouts[name];
   if (!layout) return;
@@ -907,6 +929,7 @@ function renderLayoutList() {
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
       <button class="layout-menu-btn" title="Options">⋯</button>
       <div class="layout-dropdown">
+        <div class="layout-dd-item">✏ Rename</div>
         <div class="layout-dd-item">📋 Duplicate</div>
         <div class="layout-dd-item danger">🗑 Delete</div>
       </div>`;
@@ -918,8 +941,9 @@ function renderLayoutList() {
       document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open'));
       if (!isOpen) dd.classList.add('open');
     };
-    item.querySelectorAll('.layout-dd-item')[0].onclick = e => { e.stopPropagation(); duplicateLayout(name); };
-    item.querySelectorAll('.layout-dd-item')[1].onclick = e => { e.stopPropagation(); deleteLayout(name); };
+    item.querySelectorAll('.layout-dd-item')[0].onclick = e => { e.stopPropagation(); renameLayout(name); };
+    item.querySelectorAll('.layout-dd-item')[1].onclick = e => { e.stopPropagation(); duplicateLayout(name); };
+    item.querySelectorAll('.layout-dd-item')[2].onclick = e => { e.stopPropagation(); deleteLayout(name); };
     el.appendChild(item);
   });
   updateSaveBtns();
