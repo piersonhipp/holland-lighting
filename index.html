@@ -482,6 +482,9 @@
         <input type="number" class="tool-number" id="stampSizeInput" min="8" max="80" value="24">
         <div class="sep"></div>
         <button class="tool-btn" id="clearPageBtn" style="color:#f87171">🗑 Clear Page</button>
+        <div class="sep"></div>
+        <button class="tool-btn" id="copyStampsBtn" disabled title="Copy selected stamps (Ctrl+C)">⎘ Copy</button>
+        <button class="tool-btn" id="pasteStampsBtn" disabled title="Paste stamps onto current page (Ctrl+V)">⎘ Paste</button>
       </div>
       <div id="canvasWrap">
         <div id="emptyState">
@@ -579,6 +582,7 @@ let st = {
   snaps: [], snapTimer: null,
   customStamps: [],
   layouts: {}, currentLayout: null,
+  clipboard: [],
 };
 function curPage() { return st.keptPages[st.pageIdx]; }
 function allFixtures() { return [...FIXTURES, ...st.customStamps]; }
@@ -1057,6 +1061,7 @@ function renderStamps() {
     layer.appendChild(el);
   });
   layer.style.pointerEvents=st.mode==='place'?'none':'all';
+  updateCopyPasteBtns();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1156,6 +1161,40 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// COPY / PASTE
+// ══════════════════════════════════════════════════════════════════════════
+function updateCopyPasteBtns() {
+  const copyBtn = document.getElementById('copyStampsBtn');
+  const pasteBtn = document.getElementById('pasteStampsBtn');
+  if (copyBtn) copyBtn.disabled = st.selectedIds.size === 0;
+  if (pasteBtn) {
+    pasteBtn.disabled = st.clipboard.length === 0 || !curPage();
+    pasteBtn.textContent = st.clipboard.length ? `⎘ Paste (${st.clipboard.length})` : '⎘ Paste';
+  }
+}
+
+function copyStamps() {
+  if (!st.selectedIds.size) return;
+  st.clipboard = st.stamps.filter(s => st.selectedIds.has(s.id)).map(s => ({ ...s }));
+  updateCopyPasteBtns();
+}
+
+function pasteStamps() {
+  if (!st.clipboard.length || !curPage()) return;
+  st.selectedIds.clear();
+  const newStamps = st.clipboard.map(s => {
+    const ns = { ...s, id: Date.now() + Math.random(), origPage: curPage() };
+    st.selectedIds.add(ns.id);
+    return ns;
+  });
+  st.stamps.push(...newStamps);
+  renderStamps(); renderLegend();
+}
+
+document.getElementById('copyStampsBtn').onclick = copyStamps;
+document.getElementById('pasteStampsBtn').onclick = pasteStamps;
+
+// ══════════════════════════════════════════════════════════════════════════
 // KEYBOARD
 // ══════════════════════════════════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
@@ -1171,6 +1210,8 @@ document.addEventListener('keydown',e=>{
     st.stamps=st.stamps.filter(s=>!st.selectedIds.has(s.id));
     st.selectedIds.clear(); renderStamps(); renderLegend();
   }
+  if(e.key==='c'&&(e.ctrlKey||e.metaKey)&&!inInput){ e.preventDefault(); copyStamps(); }
+  if(e.key==='v'&&(e.ctrlKey||e.metaKey)&&!inInput){ e.preventDefault(); pasteStamps(); }
 });
 
 // ══════════════════════════════════════════════════════════════════════════
