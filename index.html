@@ -587,6 +587,7 @@ let st = {
   customStamps: [],
   layouts: {}, currentLayout: null,
   clipboard: [],
+  dirty: false,
 };
 function curPage() { return st.keptPages[st.pageIdx]; }
 function allFixtures() { return [...FIXTURES, ...st.customStamps]; }
@@ -707,6 +708,7 @@ async function saveLayout(name) {
 
   st.layouts[name] = { ...payload, pdf_path };
   st.currentLayout = name;
+  st.dirty = false;
   renderLayoutList();
   } catch (e) {
     alert('Save error: ' + e.message);
@@ -778,6 +780,15 @@ async function renameLayout(name) {
 }
 
 async function openLayout(name) {
+  if (st.currentLayout === name) return;
+  if (st.dirty) {
+    const confirmed = await showConfirm(
+      'Unsaved changes',
+      'You have unsaved changes that will be lost if you switch layouts. Continue without saving?',
+      'Discard & Open'
+    );
+    if (!confirmed) return;
+  }
   const layout = st.layouts[name];
   if (!layout) return;
 
@@ -790,6 +801,7 @@ async function openLayout(name) {
     st.stampSize = layout.stampSize || 24;
     st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
     st.currentLayout = name;
+    st.dirty = false;
     st.pageIdx = 0;
     st.selectedIds.clear();
     document.getElementById('stampSizeInput').value = st.stampSize;
@@ -905,6 +917,7 @@ function renderCustomList() {
       e.stopPropagation();
       st.customStamps = st.customStamps.filter(x=>x.id!==cs.id);
       st.stamps = st.stamps.filter(s=>s.fixtureId!==cs.id);
+      st.dirty = true;
       if (st.activeFixture===cs.id) deactivatePlace();
       renderCustomList(); renderFixtureList(); renderStamps();
     });
@@ -1171,6 +1184,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
       st.snaps.forEach(a=>{const ax=a.nx*W,ay=a.ny*H;if(Math.abs(px-ax)<T)px=ax;if(Math.abs(py-ay)<T)py=ay;});
     }
     st.stamps.push({id:Date.now()+Math.random(),fixtureId:st.activeFixture,nx:px/W,ny:py/H,origPage:curPage()});
+    st.dirty = true;
     renderStamps(); renderLegend(); hideGuide();
   });
 
@@ -1217,7 +1231,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
     }
     renderStamps();
   });
-  document.addEventListener('pointerup',()=>{ st.dragState=null; });
+  document.addEventListener('pointerup',()=>{ if(st.dragState) st.dirty=true; st.dragState=null; });
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1248,6 +1262,7 @@ function pasteStamps() {
     return ns;
   });
   st.stamps.push(...newStamps);
+  st.dirty = true;
   renderStamps(); renderLegend();
 }
 
@@ -1268,6 +1283,7 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '&&!inInput){e.preventDefault();if(st.mode==='place')deactivatePlace();return;}
   if((e.key==='Delete'||e.key==='Backspace')&&st.selectedIds.size&&!inInput){
     st.stamps=st.stamps.filter(s=>!st.selectedIds.has(s.id));
+    st.dirty = true;
     st.selectedIds.clear(); renderStamps(); renderLegend();
   }
   if(e.key==='c'&&(e.ctrlKey||e.metaKey)&&!inInput){ e.preventDefault(); copyStamps(); }
@@ -1429,6 +1445,7 @@ document.getElementById('csAddBtn').onclick=()=>{
   const letter=(document.getElementById('csLetter').value.trim()||label.charAt(0)).toUpperCase().slice(0,2);
   const cs={id:'custom_'+Date.now(),label,shape:csShape.value,color:csColor,letter};
   st.customStamps.push(cs);
+  st.dirty = true;
   renderCustomList();renderFixtureList();
   csDialog.classList.remove('open');
   document.getElementById('csName').value='';document.getElementById('csLetter').value='';
@@ -1477,8 +1494,8 @@ document.addEventListener('keydown', e => {
   else if (e.key === '-')             { e.preventDefault(); zoomOut(); }
   else if (e.key === '0')             { e.preventDefault(); applyZoom(1); }
 });
-document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.target.value);if(v>=8&&v<=80){st.stampSize=v;renderStamps();renderLegend();} };
-document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all stamps on this page?'))return;st.stamps=st.stamps.filter(s=>s.origPage!==curPage());st.selectedIds.clear();renderStamps();renderLegend(); };
+document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.target.value);if(v>=8&&v<=80){st.stampSize=v;st.dirty=true;renderStamps();renderLegend();} };
+document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all stamps on this page?'))return;st.stamps=st.stamps.filter(s=>s.origPage!==curPage());st.dirty=true;st.selectedIds.clear();renderStamps();renderLegend(); };
 document.getElementById('exportBtn').onclick=exportPDF;
 
 function showConfirm(title, body, okLabel) {
