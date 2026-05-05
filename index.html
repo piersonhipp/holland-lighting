@@ -167,6 +167,22 @@
     transition: all 0.12s; font-family: 'DM Sans', sans-serif;
   }
   .save-btn:hover { background: var(--green-hover); border-color: var(--green-hover); }
+  #saveOverlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+    flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  }
+  #saveOverlay.active { display: flex; }
+  #saveOverlay .save-spinner {
+    width: 56px; height: 56px; border: 6px solid rgba(255,255,255,0.2);
+    border-top-color: #10b981; border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+  #saveOverlay .save-label {
+    color: #fff; font-size: 18px; font-weight: 600; letter-spacing: 0.02em;
+    font-family: 'DM Sans', sans-serif;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .sidebar-btn {
     width: 100%; background: var(--navy-dark); color: var(--text-dim); border: 1px solid var(--border-light);
     border-radius: 5px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
@@ -368,6 +384,10 @@
 </style>
 </head>
 <body>
+<div id="saveOverlay">
+  <div class="save-spinner"></div>
+  <div class="save-label">Saving…</div>
+</div>
 
 <!-- ── AUTH SCREEN ──────────────────────────────────────────────────────── -->
 <div id="authScreen">
@@ -640,6 +660,8 @@ async function loadLayouts() {
 
 async function saveLayout(name) {
   if (!name.trim()) return alert('Enter a layout name.');
+  const overlay = document.getElementById('saveOverlay');
+  overlay.classList.add('active');
   try {
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
@@ -673,13 +695,15 @@ async function saveLayout(name) {
   let { error: saveErr } = isNew
     ? await sb.from('layouts').insert(row)
     : await sb.from('layouts').update({ data: payload, pdf_path, updated_at: row.updated_at }).eq('name', name);
-  if (saveErr) { alert('Save failed: ' + saveErr.message); return; }
+  if (saveErr) { overlay.classList.remove('active'); alert('Save failed: ' + saveErr.message); return; }
 
   st.layouts[name] = { ...payload, pdf_path };
   st.currentLayout = name;
   renderLayoutList();
   } catch (e) {
     alert('Save error: ' + e.message);
+  } finally {
+    overlay.classList.remove('active');
   }
 }
 
