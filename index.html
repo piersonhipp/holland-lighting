@@ -1290,6 +1290,9 @@ async function loadJsPDF(){
 
 async function exportPDF() {
   if(!st.pdfDoc||!st.keptPages.length) return alert('No PDF loaded.');
+  const defaultName = (st.currentLayout || st.pdfName || 'lighting-layout');
+  const exportName = prompt('Save PDF as:', defaultName);
+  if(!exportName || !exportName.trim()) return;
   let jsPDF; try{jsPDF=await loadJsPDF();}catch(e){return alert('Could not load jsPDF: '+e.message);}
 
   // Legend page — canvas sized to letter aspect ratio (8.5×11 = 0.7727)
@@ -1349,7 +1352,7 @@ async function exportPDF() {
     doc.addPage([pW,pH],pW>pH?'l':'p');
     doc.addImage(oc.toDataURL('image/png'),'PNG',0,0,pW,pH);
   }
-  doc.save((st.pdfName||'lighting-layout')+'-annotated.pdf');
+  doc.save(exportName.trim().replace(/\.pdf$/i,'')+'.pdf');
 }
 
 function drawShape(ctx,shape,sx,sy,r){
