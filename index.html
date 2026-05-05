@@ -426,6 +426,7 @@
   <div id="appHeader">
     <h1>💡 Lighting Layout</h1>
     <button class="hdr-btn" id="uploadBtn">⬇ Upload PDF</button>
+    <button class="hdr-btn danger" id="exitBtn" style="display:none">✕ Exit</button>
     <input type="file" id="fileInput" accept="application/pdf" style="display:none">
     <div class="sep"></div>
     <button class="hdr-btn primary" id="exportBtn">⬆ Export PDF</button>
@@ -484,8 +485,6 @@
         <div class="sep"></div>
         <span class="tool-label">Size</span>
         <input type="number" class="tool-number" id="stampSizeInput" min="8" max="80" value="24">
-        <div class="sep"></div>
-        <button class="tool-btn" id="clearPageBtn" style="color:#f87171">🗑 Clear Page</button>
         <div class="sep"></div>
         <button class="tool-btn" id="copyStampsBtn" disabled title="Copy selected stamps (Ctrl+C)">⎘ Copy</button>
         <button class="tool-btn" id="pasteStampsBtn" disabled title="Paste stamps onto current page (Ctrl+V)">⎘ Paste</button>
@@ -823,6 +822,7 @@ async function openLayout(name) {
       st.pdfName = layout.pdfName || name;
       st.pdfPath = layout.pdf_path;
       st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+      document.getElementById('exitBtn').style.display = '';
       apply();
       ensureCanvas();
       renderPdfPage();
@@ -991,6 +991,7 @@ async function handleFileUpload(file) {
   const buf = await file.arrayBuffer();
   st.pdfBuffer = buf.slice(0);
   st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+  document.getElementById('exitBtn').style.display = '';
 }
 
 function bindFileInput() {
@@ -1495,7 +1496,30 @@ document.addEventListener('keydown', e => {
   else if (e.key === '0')             { e.preventDefault(); applyZoom(1); }
 });
 document.getElementById('stampSizeInput').onchange=e=>{ const v=parseInt(e.target.value);if(v>=8&&v<=80){st.stampSize=v;st.dirty=true;renderStamps();renderLegend();} };
-document.getElementById('clearPageBtn').onclick=()=>{ if(!confirm('Clear all stamps on this page?'))return;st.stamps=st.stamps.filter(s=>s.origPage!==curPage());st.dirty=true;st.selectedIds.clear();renderStamps();renderLegend(); };
+async function exitToHome() {
+  if (st.pdfDoc) {
+    const msg = st.dirty
+      ? 'You have unsaved changes. Exiting will discard them permanently.'
+      : 'This will close the current plan and return to the home screen.';
+    const confirmed = await showConfirm('Exit current plan?', msg, 'Exit');
+    if (!confirmed) return;
+  }
+  st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
+  st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
+  st.currentLayout = null; st.customStamps = []; st.dirty = false;
+  st.scale = 1; st.mode = 'select'; st.snaps = []; st.dragState = null;
+  deactivatePlace();
+  const cc = document.getElementById('canvasContainer');
+  if (cc) cc.remove();
+  document.getElementById('pageInfo').textContent = 'No PDF loaded';
+  document.getElementById('prevPage').disabled = true;
+  document.getElementById('nextPage').disabled = true;
+  document.getElementById('zoomSel').value = '1';
+  document.getElementById('stampSizeInput').value = 24;
+  document.getElementById('exitBtn').style.display = 'none';
+  renderFixtureList(); renderCustomList(); renderLayoutList(); renderLegend();
+}
+document.getElementById('exitBtn').onclick = exitToHome;
 document.getElementById('exportBtn').onclick=exportPDF;
 
 function showConfirm(title, body, okLabel) {
