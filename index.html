@@ -443,7 +443,7 @@
     border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 600;
     cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.12s;
   }
-  .confirm-ok:hover { background: #dc2626; }
+  .confirm-ok:hover { filter: brightness(1.12); }
 </style>
 </head>
 <body>
@@ -629,7 +629,7 @@
 <!-- ── CONFIRM MODAL ────────────────────────────────────────────────────── -->
 <div id="confirmModal">
   <div class="confirm-box">
-    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
     <div class="confirm-title" id="confirmTitle"></div>
     <div class="confirm-body" id="confirmBody"></div>
     <div class="confirm-actions">
@@ -1976,7 +1976,7 @@ async function exitToHome() {
     const msg = st.dirty
       ? 'You have unsaved changes. Exiting will discard them permanently.'
       : 'This will close the current plan and return to the home screen.';
-    const confirmed = await showConfirm('Exit current plan?', msg, 'Exit');
+    const confirmed = await showConfirm('Exit current plan?', msg, 'Exit', st.dirty);
     if (!confirmed) return;
   }
   st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
@@ -1999,14 +1999,17 @@ async function exitToHome() {
 document.getElementById('exitBtn').onclick = exitToHome;
 document.getElementById('exportBtn').onclick=exportPDF;
 
-function showConfirm(title, body, okLabel) {
+function showConfirm(title, body, okLabel, danger = true) {
   return new Promise(resolve => {
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmBody').textContent = body;
-    document.getElementById('confirmOk').textContent = okLabel || 'Continue';
+    const ok = document.getElementById('confirmOk');
+    ok.textContent = okLabel || 'Continue';
+    ok.style.background = danger ? '' : 'var(--blue)';
+    ok.style.setProperty('--ok-hover', danger ? '#dc2626' : 'var(--blue-hover)');
+    document.getElementById('confirmIcon').textContent = danger ? '⚠️' : '💬';
     const modal = document.getElementById('confirmModal');
     modal.classList.add('open');
-    const ok = document.getElementById('confirmOk');
     const cancel = document.getElementById('confirmCancel');
     function cleanup(result) { modal.classList.remove('open'); ok.onclick = null; cancel.onclick = null; resolve(result); }
     ok.onclick = () => cleanup(true);
