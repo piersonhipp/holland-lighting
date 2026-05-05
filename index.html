@@ -1396,6 +1396,7 @@ function deactivatePlace() {
 async function handleFileUpload(file) {
   st.pdfName = file.name.replace(/\.pdf$/i,'');
   st.pdfPath = null;
+  _pageCache = {};
   const buf = await file.arrayBuffer();
   st.pdfBuffer = buf.slice(0);
   st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -1493,15 +1494,12 @@ function ensureCanvas() {
 }
 
 let _renderTask = null;
+let _pageCache = {}; // key: `${origPage}_${flipped}` → offscreen canvas at CACHE_SCALE
+
+const CACHE_SCALE = 2;
 
 async function renderPdfPage() {
   const orig = curPage(); if (!orig || !st.pdfDoc) return;
-
-  // Cancel any in-progress render so we never draw on top of a partial transform
-  if (_renderTask) { _renderTask.cancel(); _renderTask = null; }
-
-  const spinner = document.getElementById('renderSpinner');
-  if (spinner) spinner.style.display = 'flex';
 
   ensureCanvas();
   const page = await st.pdfDoc.getPage(orig);
@@ -1511,38 +1509,57 @@ async function renderPdfPage() {
   const fitScale = Math.min(availW / nativeVp.width, availH / nativeVp.height);
   st.scale = fitScale * st.zoomPct / 100;
   document.getElementById('zoomDisplay').textContent = st.zoomPct + '%';
-  const vp = page.getViewport({scale: st.scale});
+
+  const displayW = Math.round(nativeVp.width * st.scale);
+  const displayH = Math.round(nativeVp.height * st.scale);
   const cv = document.getElementById('pdfCanvas');
   const container = document.getElementById('canvasContainer');
-  cv.width=vp.width; cv.height=vp.height;
-  container.style.width=vp.width+'px'; container.style.height=vp.height+'px';
+  cv.width = displayW; cv.height = displayH;
+  container.style.width = displayW + 'px'; container.style.height = displayH + 'px';
   const ctx = cv.getContext('2d');
-  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.clearRect(0, 0, displayW, displayH);
 
-  _renderTask = page.render({canvasContext: ctx, viewport: vp});
-  try {
-    await _renderTask.promise;
-  } catch (e) {
-    if (e?.name === 'RenderingCancelledException') return;
+  const flipped = isFlipped();
+  const cacheKey = `${orig}_${flipped}`;
+
+  if (_pageCache[cacheKey]) {
+    // Fast path: bitmap scale from cache — no PDF.js rasterization
+    ctx.drawImage(_pageCache[cacheKey], 0, 0, displayW, displayH);
+  } else {
+    // Slow path: rasterize once at CACHE_SCALE, store in cache, then blit
+    if (_renderTask) { _renderTask.cancel(); _renderTask = null; }
+    const spinner = document.getElementById('renderSpinner');
+    if (spinner) spinner.style.display = 'flex';
+
+    const cacheVp = page.getViewport({ scale: CACHE_SCALE });
+    const offscreen = Object.assign(document.createElement('canvas'), { width: cacheVp.width, height: cacheVp.height });
+    _renderTask = page.render({ canvasContext: offscreen.getContext('2d'), viewport: cacheVp });
+    try {
+      await _renderTask.promise;
+    } catch (e) {
+      if (e?.name === 'RenderingCancelledException') { if (spinner) spinner.style.display = 'none'; return; }
+      if (spinner) spinner.style.display = 'none';
+      throw e;
+    }
+    _renderTask = null;
+
+    if (flipped) {
+      const tmp = Object.assign(document.createElement('canvas'), { width: cacheVp.width, height: cacheVp.height });
+      const tc = tmp.getContext('2d');
+      tc.save(); tc.translate(cacheVp.width, 0); tc.scale(-1, 1); tc.drawImage(offscreen, 0, 0); tc.restore();
+      _pageCache[cacheKey] = tmp;
+    } else {
+      _pageCache[cacheKey] = offscreen;
+    }
+
+    ctx.drawImage(_pageCache[cacheKey], 0, 0, displayW, displayH);
     if (spinner) spinner.style.display = 'none';
-    throw e;
   }
-  _renderTask = null;
-  if (spinner) spinner.style.display = 'none';
 
-  if (isFlipped()) {
-    const tmp = document.createElement('canvas');
-    tmp.width=cv.width; tmp.height=cv.height;
-    tmp.getContext('2d').drawImage(cv,0,0);
-    ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.save(); ctx.translate(cv.width,0); ctx.scale(-1,1);
-    ctx.drawImage(tmp,0,0);
-    ctx.restore();
-  }
-  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}  (orig p.${orig})${isFlipped()?' [flipped]':''}  •  ${st.pdfName}`;
+  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}  (orig p.${orig})${flipped?' [flipped]':''}  •  ${st.pdfName}`;
   document.getElementById('prevPage').disabled=st.pageIdx<=0;
   document.getElementById('nextPage').disabled=st.pageIdx>=st.keptPages.length-1;
-  document.getElementById('flipBtn').classList.toggle('flipped', isFlipped());
+  document.getElementById('flipBtn').classList.toggle('flipped', flipped);
   renderStamps();
   renderDividers();
 }
@@ -2339,6 +2356,7 @@ async function exitToHome() {
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
   st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dividers = []; st.zoneNames = []; st.pagePositions = {}; st.dirty = false;
   st.scale = 1; st.zoomPct = 100; st.mode = 'select'; st.snaps = []; st.dragState = null;
+  _pageCache = {};
   clearHistory();
   deactivatePlace();
   const cc = document.getElementById('canvasContainer');
