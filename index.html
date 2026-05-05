@@ -191,7 +191,7 @@
   .catalog-sku-row.selected .catalog-sku-code { color:#3b82f6; }
   .catalog-no-results { padding:40px; text-align:center; color:var(--text-muted); font-size:13px; }
   .cat-section { margin-bottom:4px; }
-  .cat-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-dim); padding:8px 18px 4px; position:sticky; top:0; background:var(--navy); z-index:1; border-bottom:1px solid var(--border); }
+  .cat-section-title { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:#bfdbfe; padding:7px 18px; position:sticky; top:0; background:#1e3a5f; z-index:1; border-bottom:1px solid #2d5a9e; border-top:1px solid #2d5a9e; }
   .cat-model { padding:0 0 2px 0; }
   .cat-model-name { font-size:12px; font-weight:600; color:var(--text); padding:5px 18px 2px 18px; background:var(--navy-dark); border-top:1px solid var(--border); }
   .cat-skus { }
@@ -207,7 +207,8 @@
   .catalog-customize label { font-size:11px; color:var(--text-muted); display:block; margin-bottom:3px; }
   .catalog-shape-sel { background:var(--navy); border:1px solid var(--border-light); border-radius:5px; padding:4px 8px; font-size:12px; color:var(--text); outline:none; font-family:'DM Sans',sans-serif; }
   .catalog-letter { width:34px; background:var(--navy); border:1px solid var(--border-light); border-radius:5px; padding:4px 6px; font-size:12px; color:var(--text); outline:none; text-align:center; font-family:'DM Sans',sans-serif; text-transform:uppercase; }
-  .catalog-color-row { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+  .catalog-color-row { display:flex; gap:4px; flex-wrap:wrap; align-items:center; margin-bottom:4px; }
+  .catalog-color-wheel { width:28px; height:28px; border:1px solid var(--border-light); border-radius:5px; background:transparent; cursor:pointer; padding:1px; margin-top:2px; }
   .catalog-swatch { width:18px; height:18px; border-radius:3px; cursor:pointer; border:2px solid transparent; flex-shrink:0; transition:border-color 0.1s; }
   .catalog-swatch.active { border-color:#1d4ed8; }
   .catalog-actions { display:flex; gap:8px; justify-content:flex-end; }
@@ -566,7 +567,7 @@
       <div class="catalog-customize">
         <div id="catalogPreview"></div>
         <div><label>Shape</label><select class="catalog-shape-sel" id="catalogShapeSel"></select></div>
-        <div><label>Color</label><div class="catalog-color-row" id="catalogColorRow"></div></div>
+        <div><label>Color</label><div class="catalog-color-row" id="catalogColorRow"></div><input type="color" class="catalog-color-wheel" id="catalogColorWheel" title="Pick any color"></div>
         <div><label>Letter</label><input class="catalog-letter" id="catalogLetterInput" maxlength="2"></div>
       </div>
       <div class="catalog-actions">
@@ -663,7 +664,7 @@ const CATALOG = [
     { name:'Halo Signature', level:9, skus:[{code:'BBL 4094BLK',finish:'Black'},{code:'BBL 4094BSL',finish:'Burnished Silver Leaf'},{code:'BBL 4094G',finish:'Gild'},{code:'BBL 4094WHT',finish:'White'}]},
     { name:'Rosehill Semi-Flush Signature', level:9, skus:[{code:'ARN 4000HAB-WG',finish:'Hand-Rubbed Antique Brass'},{code:'ARN 4000PN-WG',finish:'Polished Nickel'}]},
   ]},
-  { id:'statement', name:'Statement Chandeliers', shape:'hexagon', color:'#7C3AED', letter:'SC', models:[
+  { id:'statement', name:'Statement Chandeliers', shape:'hexagon', color:'#7C3AED', letter:'C', models:[
     { name:'Eldon Medium', level:1, skus:[{code:'DJC1194MBK',finish:'Black'},{code:'DJC1194SB',finish:'Satin Brass'}]},
     { name:'Vector 5 Light Studio', level:1, skus:[{code:'3124305-05',finish:'Chrome'},{code:'3124305-112',finish:'Black'},{code:'3124305-848',finish:'Satin Brass'},{code:'3124305-962',finish:'Nickel'}]},
     { name:'Baker 4 Light Studio', level:2, skus:[{code:'3187204-112',finish:'Black'},{code:'3187204-848',finish:'Satin Black'},{code:'3187204-962',finish:'Nickel'}]},
@@ -685,7 +686,7 @@ const CATALOG = [
     { name:'Griffin Extra Large', level:10, skus:[{code:'AL 5005BZ/CHC-L',finish:'Bronze and Chocolate Leather w/ Linen Shades'},{code:'AL 5005HAB/SDL-L',finish:'Antique Brass and Saddle Leather w/ Linen Shades'},{code:'AL 5005PN/PAR-L',finish:'Polished Nickel and Parchment Leather w/ Linen Shades'}]},
     { name:'Whit Extra Large', level:10, skus:[{code:'MF 5052PN/NTW',finish:'PN & Natural Wicker w/ White Glass Shade'},{code:'MF 5052SB/NTW',finish:'Soft Brass & Natural Wicker w/ White Glass Shade'},{code:'MF 5052SB/WW',finish:'Soft Brass & White Wicker w/ White Glass Shade'}]},
   ]},
-  { id:'chandelier', name:'Chandeliers', shape:'hexagon', color:'#A78BFA', letter:'CH', models:[
+  { id:'chandelier', name:'Chandeliers', shape:'hexagon', color:'#A78BFA', letter:'C', models:[
     { name:'Greenwich 5 Light', level:1, skus:[{code:'3167105-112',finish:'Black'},{code:'3167105-848',finish:'Satin Brass'},{code:'3167105-962',finish:'Nickel'}]},
     { name:'Abells Six Light Chandelier', level:2, skus:[{code:'GLC1196MBK',finish:'Black'},{code:'GLC1196SB',finish:'Satin Brass'}]},
     { name:'Porteau Medium', level:2, skus:[{code:'DJC1024MBK',finish:'Black'},{code:'DJC1024SB',finish:'Satin Brass'}]},
@@ -709,7 +710,7 @@ const CATALOG = [
     { name:'Darlana Large Single Ring (Lv13)', level:13, skus:[{code:'CHC 5174AB',finish:'Antique-Burnished Brass'},{code:'CHC 5174PN',finish:'Polished Nickel'}]},
     { name:'Belfair Grande 2-Tier', level:14, skus:[{code:'IKF 5753AI',finish:'Aged Iron'},{code:'IKF 5753GI',finish:'Gilded Iron'}]},
   ]},
-  { id:'linear', name:'Linear Chandeliers', shape:'hexagon', color:'#6366F1', letter:'LC', models:[
+  { id:'linear', name:'Linear Chandeliers', shape:'hexagon', color:'#6366F1', letter:'C', models:[
     { name:'Foxdale 6 Light', level:1, skus:[{code:'3609306-112',finish:'Black'},{code:'3609306-848',finish:'Satin Brass'},{code:'3609306-962',finish:'Nickel'}]},
     { name:'Laguna Large', level:1, skus:[{code:'CC1712BBS',finish:'Brushed Brass'}]},
     { name:'Moffet Street 6 Light', level:2, skus:[{code:'6634506-710',finish:'Burnt Sienna'},{code:'6634506-848',finish:'Satin Brass'},{code:'6634506-872',finish:'Washed Pine'},{code:'6634506-962',finish:'Nickel'}]},
@@ -748,7 +749,7 @@ const CATALOG = [
     { name:'Elliot Grande Signature', level:11, skus:[{code:'SK 5355PGY',finish:'Portland Gray'},{code:'SK 5355WHT',finish:'Matte White'}]},
     { name:'Reese 18 Signature', level:11, skus:[{code:'S 5182BZ-CG',finish:'Bronze with Clear Glass'},{code:'S 5182PN-CG',finish:'Polished Nickel with Clear Glass'},{code:'S 5182SB-CG',finish:'Soft Brass with Clear Glass'}]},
   ]},
-  { id:'vanity', name:'Vanity Lights', shape:'circle', color:'#F472B6', letter:'VL', models:[
+  { id:'vanity', name:'Vanity Lights', shape:'circle', color:'#F472B6', letter:'V', models:[
     { name:'Emile Medium Gen Lighting', level:1, skus:[{code:'GLV1022CH',finish:'Chrome'},{code:'GLV1022MBK',finish:'Black'},{code:'GLV1022SB',finish:'Satin Bronze'},{code:'GLV1022BS',finish:'Brushed Steel'}]},
     { name:'Vinton Gen Lighting', level:1, skus:[{code:'4420902-05',finish:'Chrome'},{code:'4420902-112',finish:'Black'},{code:'4420902-710',finish:'ORB'},{code:'4420902-962',finish:'BN'}]},
     { name:'Oslo 2 Light Gen Lighting', level:2, skus:[{code:'41171-05',finish:'Chrome'},{code:'41171-112',finish:'Black'},{code:'41171-710',finish:'Bronze'},{code:'41171-962',finish:'BN'}]},
@@ -765,7 +766,7 @@ const CATALOG = [
     { name:'Hanover 3 Light Studio', level:6, skus:[{code:'CV1053AI',finish:'Aged Iron'},{code:'CV1053BBS',finish:'Burnished Brass'},{code:'CV1053PN',finish:'Nickel'}]},
     { name:'Geneva Studio', level:7, skus:[{code:'CV1023AI',finish:'Aged Iron'},{code:'CV1023BBS',finish:'Burnished Brass'},{code:'CV1023PN',finish:'Nickel'}]},
   ]},
-  { id:'fan', name:'Ceiling Fans', shape:'plus', color:'#16A34A', letter:'CF', models:[
+  { id:'fan', name:'Ceiling Fans', shape:'plus', color:'#16A34A', letter:'F', models:[
     { name:'Linden 52 Fan w/ Light Kit', level:1, skus:[{code:'5LD52BSD',finish:'Nickel'},{code:'5LD52BZD',finish:'Bronze'},{code:'5LD52MBKD',finish:'Black'},{code:'5LD52RZWD',finish:'White'}]},
     { name:'Linden 52 Fan w/o Light Kit', level:1, skus:[{code:'5LD52BS',finish:'Nickel'},{code:'5LD52BZ',finish:'Bronze'},{code:'5LD52MBK',finish:'Black'},{code:'5LD52RZW',finish:'White'}]},
     { name:'Rozzen 52 w/o Light', level:2, skus:[{code:'3RZR52AGP',finish:'Pewter'},{code:'3RZR52BBS',finish:'Brass'},{code:'3RZR52BS',finish:'Brushed Steel'},{code:'3RZR52MBK',finish:'Black'},{code:'3RZR52RZW',finish:'White'}]},
@@ -777,7 +778,7 @@ const CATALOG = [
     { name:'Maverick 60 w/o Light', level:5, skus:[{code:'3MAVR60AGP',finish:'Aged Pewter / Light Grey Oak Blades'},{code:'3MAVR60BK',finish:'Black / Dark Walnut Blades'},{code:'3MAVR60BKBK',finish:'Black / Black Blades'},{code:'3MAVR60BS',finish:'Brushed Steel / Dark Walnut Blades'},{code:'3MAVR60BSKOA',finish:'Brushed Steel / Koa Blades'},{code:'3MAVR60RZW',finish:'White / White Blades'},{code:'3MAVR60RZWBBS',finish:'Burnished Brass / White Blades'}]},
     { name:'Maverick 60 w/ Light', level:6, skus:[{code:'3MAVR60AGPD',finish:'Aged Pewter / Light Grey Oak Blades'},{code:'3MAVR60BKBKD',finish:'Black / Black Blades'},{code:'3MAVR60BKD',finish:'Black / Dark Walnut Blades'},{code:'3MAVR60BSKOAD',finish:'Brushed Steel / Koa Blades'},{code:'3MAVR60RZWD',finish:'White / White Blades'},{code:'3MAVR60BSD',finish:'Brushed Steel / Dark Walnut Blades'}]},
   ]},
-  { id:'wallsconce', name:'Wall Sconces', shape:'triangle', color:'#F97316', letter:'WS', models:[
+  { id:'wallsconce', name:'Wall Sconces', shape:'triangle', color:'#F97316', letter:'S', models:[
     { name:'Foxdale 1 Light', level:1, skus:[{code:'4109301-112',finish:'Black'},{code:'4109301-848',finish:'Satin Brass'},{code:'4109301-962',finish:'Nickel'}]},
     { name:'Porteau Medium', level:1, skus:[{code:'DJW1011MBK',finish:'Black'},{code:'DJW1011SB',finish:'Satin Brass'}]},
     { name:'Chatsworth 13 Sconce', level:2, skus:[{code:'AW1231AI',finish:'Aged Iron'},{code:'AW1231GD',finish:'Gild'}]},
@@ -797,7 +798,7 @@ const CATALOG = [
     { name:'Hulton Double', level:8, skus:[{code:'TOB 2191BZ-L',finish:'Bronze w/ Linen Shades'},{code:'TOB 2191HAB-L',finish:'Hand Rubbed Antique Brass w/ Linen Shades'},{code:'TOB 2191PN-L',finish:'Polished Nickel w/ Linen Shades'}]},
     { name:'Leighton', level:8, skus:[{code:'KS 2065PN-BLS',finish:'Polished Nickel w/ Blush Tinted Glass'},{code:'KS 2065PN-CRE',finish:'Polished Nickel w/ Cream Tinted Glass'},{code:'KS 2065SB-BLS',finish:'Soft Brass w/ Blush Tinted Glass'},{code:'KS 2065SB-CRE',finish:'Soft Brass w/ Cream Tinted Glass'}]},
   ]},
-  { id:'extwall', name:'Exterior Wall Sconces', shape:'triangle', color:'#78716C', letter:'XW', models:[
+  { id:'extwall', name:'Exterior Wall Sconces', shape:'triangle', color:'#78716C', letter:'E', models:[
     { name:'Barn Light', level:1, skus:[{code:'8637401-12',finish:'Black'},{code:'8637401-15',finish:'White'},{code:'8637401-71',finish:'Bronze'}]},
     { name:'Founders', level:2, skus:[{code:'8648401-12',finish:'Black'},{code:'8648401-71',finish:'Bronze'}]},
     { name:'Galena', level:2, skus:[{code:'OL14402NCP',finish:'Copper'},{code:'OL14402SBL',finish:'Sable'},{code:'OL14402TXB',finish:'Black'}]},
@@ -814,14 +815,14 @@ const CATALOG = [
     { name:'Stratford Medium Gas Lantern', level:9, skus:[{code:'CHO 2451BLK-CG',finish:'Matte Black w/ Clear Glass'},{code:'CHO 2451SC-CG',finish:'Soft Copper w/ Clear Glass'}]},
     { name:'Albermarle Medium Gas Lantern (Lv10)', level:10, skus:[{code:'CHO 2436SC-CG',finish:'Soft Copper and Brass w/ Clear Glass'}]},
   ]},
-  { id:'extlight', name:'Exterior Lights', shape:'circle', color:'#0F766E', letter:'XL', models:[
+  { id:'extlight', name:'Exterior Lights', shape:'circle', color:'#0F766E', letter:'E', models:[
     { name:'Founders Pendant', level:1, skus:[{code:'6248401-12',finish:'Black'},{code:'648401-71',finish:'Bronze'}]},
     { name:'Galena Pendant', level:2, skus:[{code:'OL14408SBL',finish:'Sable'},{code:'OL14408TXB',finish:'Black'}]},
     { name:'Wellsworth Pendant', level:2, skus:[{code:'OL13209ANBZ',finish:'Bronze'},{code:'OL13209PDB',finish:'Brass'},{code:'OL13209TXB',finish:'Black'}]},
     { name:'Freeport Flush Mount', level:3, skus:[{code:'CO1182HTCP',finish:'Heritage Copper'}]},
     { name:'Hyannis Pendant', level:4, skus:[{code:'CO1424NCP',finish:'Copper'},{code:'CO1424TXB',finish:'Black'}]},
   ]},
-  { id:'outfan', name:'Outdoor Fans', shape:'plus', color:'#65A30D', letter:'OF', models:[
+  { id:'outfan', name:'Outdoor Fans', shape:'plus', color:'#65A30D', letter:'O', models:[
     { name:'Linden 44 Outdoor w/o Light', level:1, skus:[{code:'5LDO44BZ',finish:'Bronze'},{code:'5LDO44MBK',finish:'Black'},{code:'5LDO44RZW',finish:'White'}]},
     { name:'Linden 52 Outdoor w/ Light', level:2, skus:[{code:'5LDO52BZD',finish:'Bronze'},{code:'5LDO52MBKD',finish:'Black'},{code:'5LDO52RZWD',finish:'White'}]},
     { name:'Avila Coastal 52 w/ Light', level:3, skus:[{code:'3AVLCR54MBKD',finish:'Black'},{code:'3AVLCR54RZWD',finish:'White'}]},
@@ -1791,15 +1792,19 @@ function selectCatalogSku(cat, model, sku, skuEl) {
     `<option value="${s}" ${s === cat.shape ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
   ).join('');
 
-  // color row
+  // color row — pick a random color as default
+  const randomColor = CUSTOM_COLORS[Math.floor(Math.random() * CUSTOM_COLORS.length)];
   const colorRow = document.getElementById('catalogColorRow');
+  const colorWheel = document.getElementById('catalogColorWheel');
+  colorWheel.value = randomColor;
   colorRow.innerHTML = CUSTOM_COLORS.map(c =>
-    `<div class="color-swatch${c.toLowerCase() === cat.color.toLowerCase() ? ' selected' : ''}" style="background:${c}" data-val="${c}" title="${c}"></div>`
+    `<div class="color-swatch${c === randomColor ? ' selected' : ''}" style="background:${c}" data-val="${c}" title="${c}"></div>`
   ).join('');
   colorRow.querySelectorAll('.color-swatch').forEach(sw => {
     sw.onclick = () => {
       colorRow.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
       sw.classList.add('selected');
+      colorWheel.value = sw.dataset.val;
       updateCatalogPreview();
     };
   });
@@ -1811,11 +1816,15 @@ function selectCatalogSku(cat, model, sku, skuEl) {
   footer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function getCatalogColor() {
+  const swatch = document.querySelector('#catalogColorRow .color-swatch.selected');
+  return swatch ? swatch.dataset.val : document.getElementById('catalogColorWheel').value;
+}
+
 function updateCatalogPreview() {
   if (!_catalogSel) return;
   const shape = document.getElementById('catalogShapeSel').value;
-  const colorSwatch = document.querySelector('#catalogColorRow .color-swatch.selected');
-  const color = colorSwatch ? colorSwatch.dataset.val : _catalogSel.cat.color;
+  const color = getCatalogColor();
   const letter = (document.getElementById('catalogLetterInput').value || _catalogSel.cat.letter).toUpperCase();
   const fixture = { shape, color, letter };
   document.getElementById('catalogPreview').innerHTML = stampSVG(fixture, 36, false);
@@ -1836,13 +1845,18 @@ document.getElementById('catalogSearch').addEventListener('input', e => {
 document.getElementById('catalogShapeSel').addEventListener('change', updateCatalogPreview);
 document.getElementById('catalogLetterInput').addEventListener('input', updateCatalogPreview);
 
+document.getElementById('catalogColorWheel').addEventListener('input', e => {
+  // deselect palette swatches when using the wheel
+  document.querySelectorAll('#catalogColorRow .color-swatch').forEach(s => s.classList.remove('selected'));
+  updateCatalogPreview();
+});
+
 document.getElementById('catalogAddBtn').onclick = () => {
   if (!_catalogSel) return;
   const { cat, model, sku } = _catalogSel;
   const label = `${model.name} - ${sku.finish}`;
   const shape = document.getElementById('catalogShapeSel').value;
-  const colorSwatch = document.querySelector('#catalogColorRow .color-swatch.selected');
-  const color = colorSwatch ? colorSwatch.dataset.val : cat.color;
+  const color = getCatalogColor();
   const letter = (document.getElementById('catalogLetterInput').value || cat.letter).trim().slice(0, 2);
 
   // reuse existing stamp with same label
