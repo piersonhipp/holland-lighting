@@ -285,6 +285,13 @@
     pointer-events: none;
   }
   #canvasWrap.drag-over #dropOverlay { display: flex; }
+  #renderSpinner {
+    display: none; position: absolute; bottom: 20px; right: 20px;
+    width: 22px; height: 22px; border-radius: 50%; z-index: 200; pointer-events: none;
+    border: 3px solid rgba(255,255,255,0.18); border-top-color: rgba(255,255,255,0.85);
+    animation: spin 0.65s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   #pdfCanvas { display: block; cursor: default; }
   #stampLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
   #guideLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
@@ -576,6 +583,7 @@
           <div style="font-size:14px;font-weight:500;color:#4a6278">or drag and drop a PDF anywhere</div>
         </div>
         <div id="dropOverlay"></div>
+        <div id="renderSpinner"></div>
       </div>
     </div>
   </div>
@@ -1407,6 +1415,9 @@ async function renderPdfPage() {
   // Cancel any in-progress render so we never draw on top of a partial transform
   if (_renderTask) { _renderTask.cancel(); _renderTask = null; }
 
+  const spinner = document.getElementById('renderSpinner');
+  if (spinner) spinner.style.display = 'block';
+
   ensureCanvas();
   const page = await st.pdfDoc.getPage(orig);
   const nativeVp = page.getViewport({ scale: 1 });
@@ -1427,10 +1438,12 @@ async function renderPdfPage() {
   try {
     await _renderTask.promise;
   } catch (e) {
+    if (spinner) spinner.style.display = 'none';
     if (e?.name === 'RenderingCancelledException') return;
     throw e;
   }
   _renderTask = null;
+  if (spinner) spinner.style.display = 'none';
 
   if (isFlipped()) {
     const tmp = document.createElement('canvas');
