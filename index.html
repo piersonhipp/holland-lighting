@@ -1124,9 +1124,10 @@ function stampSVG(f, size, selected = false) {
   else if (f.shape==='plus') { const t=s*.22,o=s*.08; shape=`<path d="M${hs-t},${o} L${hs+t},${o} L${hs+t},${hs-t} L${s-o},${hs-t} L${s-o},${hs+t} L${hs+t},${hs+t} L${hs+t},${s-o} L${hs-t},${s-o} L${hs-t},${hs+t} L${o},${hs+t} L${o},${hs-t} L${hs-t},${hs-t} Z" fill="${c}" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>` }
   else if (f.shape==='hexagon') { const r=hs-1.5,pts=Array.from({length:6},(_,i)=>{const a=(Math.PI/180)*(60*i-30);return`${hs+r*Math.cos(a)},${hs+r*Math.sin(a)}`;}).join(' '); shape=`<polygon points="${pts}" fill="${c}" stroke="#fff" stroke-width="1.5"/>`; }
   const fs = Math.max(7, Math.round(s*.38));
+  const textY = f.shape === 'triangle' ? Math.round(s * 0.62) : hs;
   return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="${glow}" xmlns="http://www.w3.org/2000/svg" opacity="0.70">
     ${shape}
-    <text x="${hs}" y="${hs}" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${f.letter}</text>
+    <text x="${hs}" y="${textY}" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="${fs}" font-weight="700" fill="#fff">${f.letter}</text>
   </svg>`;
 }
 
