@@ -722,6 +722,35 @@ async function deleteLayout(name) {
   renderLayoutList();
 }
 
+async function duplicateLayout(name) {
+  const source = st.layouts[name];
+  if (!source) return;
+  const newName = prompt('Duplicate layout as:', `${name} copy`);
+  if (!newName || !newName.trim()) return;
+  const trimmed = newName.trim();
+  if (st.layouts[trimmed]) { alert(`A layout named "${trimmed}" already exists.`); return; }
+  const overlay = document.getElementById('saveOverlay');
+  overlay.classList.add('active');
+  try {
+    const payload = {
+      stamps: JSON.parse(JSON.stringify(source.stamps || [])),
+      pdfName: source.pdfName,
+      keptPages: [...(source.keptPages || [])],
+      stampSize: source.stampSize || 24,
+      customStamps: JSON.parse(JSON.stringify(source.customStamps || [])),
+    };
+    const row = { name: trimmed, data: payload, pdf_path: source.pdf_path || null, updated_at: new Date().toISOString() };
+    const { error } = await sb.from('layouts').insert(row);
+    if (error) { alert('Duplicate failed: ' + error.message); return; }
+    st.layouts[trimmed] = { ...payload, pdf_path: row.pdf_path };
+    renderLayoutList();
+  } catch (e) {
+    alert('Duplicate error: ' + e.message);
+  } finally {
+    overlay.classList.remove('active');
+  }
+}
+
 async function openLayout(name) {
   const layout = st.layouts[name];
   if (!layout) return;
@@ -874,6 +903,7 @@ function renderLayoutList() {
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
       <button class="layout-menu-btn" title="Options">⋯</button>
       <div class="layout-dropdown">
+        <div class="layout-dd-item">📋 Duplicate</div>
         <div class="layout-dd-item danger">🗑 Delete</div>
       </div>`;
     item.querySelector('span:first-child').onclick = () => openLayout(name);
@@ -884,7 +914,8 @@ function renderLayoutList() {
       document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open'));
       if (!isOpen) dd.classList.add('open');
     };
-    item.querySelector('.layout-dd-item.danger').onclick = e => { e.stopPropagation(); deleteLayout(name); };
+    item.querySelectorAll('.layout-dd-item')[0].onclick = e => { e.stopPropagation(); duplicateLayout(name); };
+    item.querySelectorAll('.layout-dd-item')[1].onclick = e => { e.stopPropagation(); deleteLayout(name); };
     el.appendChild(item);
   });
 }
