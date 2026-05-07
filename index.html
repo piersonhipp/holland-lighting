@@ -257,6 +257,11 @@
   }
   .tool-btn:hover { background: rgba(37,99,235,0.18); color: var(--blue-hover); border-color: var(--blue-hover); }
   .tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .tool-btn.danger { color: var(--danger); border-color: rgba(248,113,113,0.3); }
+  .tool-btn.danger:hover { background: rgba(248,113,113,0.15); color: var(--danger); border-color: rgba(248,113,113,0.55); }
+  .tool-btn.danger:disabled, .tool-btn.danger:disabled:hover { background: transparent; color: var(--danger); border-color: rgba(248,113,113,0.3); }
+  .tool-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .tool-btn.primary:hover { background: var(--blue-hover); border-color: var(--blue-hover); }
   .tool-select {
     background: var(--navy-dark); color: var(--text-dim); border: 1px solid var(--border-light);
     border-radius: 5px; padding: 5px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;
@@ -518,9 +523,7 @@
     <button class="hdr-btn danger" id="exitBtn" style="display:none">✕ Exit</button>
     <input type="file" id="fileInput" accept="application/pdf" style="display:none">
     <div class="sep"></div>
-    <button class="hdr-btn primary" id="exportBtn">⬆ Export PDF</button>
-    <div class="sep"></div>
-    <button class="hdr-btn" id="adminBtn" style="display:none">⚙ Manage Users</button>
+        <button class="hdr-btn" id="adminBtn" style="display:none">⚙ Manage Users</button>
     <span class="user-pill" id="userPill"></span>
     <button class="hdr-btn" id="signOutBtn">Sign out</button>
   </div>
@@ -585,6 +588,10 @@
         <button class="tool-btn" id="flipBtn" title="Flip current page horizontally">⇄ Flip</button>
         <div class="sep"></div>
         <button class="tool-btn" id="dividerBtn" title="Click to place vertical unit dividers; click near a line to remove it">⊟ Dividers</button>
+        <div class="sep"></div>
+        <button class="tool-btn danger" id="deleteStampsBtn" disabled title="Delete selected stamps (Delete)">✕ Delete</button>
+        <div class="sep"></div>
+        <button class="tool-btn primary" id="exportBtn" title="Export PDF">⬆ Export PDF</button>
       </div>
       <div id="canvasWrap">
         <div id="emptyState">
@@ -1876,7 +1883,9 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
 function updateCopyPasteBtns() {
   const copyBtn = document.getElementById('copyStampsBtn');
   const pasteBtn = document.getElementById('pasteStampsBtn');
+  const deleteBtn = document.getElementById('deleteStampsBtn');
   if (copyBtn) copyBtn.disabled = st.selectedIds.size === 0;
+  if (deleteBtn) deleteBtn.disabled = st.selectedIds.size === 0;
   if (pasteBtn) {
     pasteBtn.disabled = st.clipboard.length === 0 || !curPage();
     pasteBtn.textContent = st.clipboard.length ? `⎘ Paste (${st.clipboard.length})` : '⎘ Paste';
@@ -1905,6 +1914,12 @@ function pasteStamps() {
 
 document.getElementById('copyStampsBtn').onclick = copyStamps;
 document.getElementById('pasteStampsBtn').onclick = pasteStamps;
+document.getElementById('deleteStampsBtn').onclick = () => {
+  if (!st.selectedIds.size) return;
+  st.stamps = st.stamps.filter(s => !st.selectedIds.has(s.id));
+  pushHistory(); st.dirty = true;
+  st.selectedIds.clear(); renderStamps(); renderLegend();
+};
 document.getElementById('undoBtn').onclick = undo;
 document.getElementById('redoBtn').onclick = redo;
 
