@@ -1750,6 +1750,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   });
 
   pdfCv.addEventListener('pointerdown',e=>{
+    if(e.button===1) return;
     if(st.mode!=='place') return;
     const r=pdfCv.getBoundingClientRect();
     let px=e.clientX-r.left, py=e.clientY-r.top;
@@ -1766,6 +1767,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   });
 
   stampLayer.addEventListener('pointerdown',e=>{
+    if(e.button===1) return;
     if(st.mode!=='select') return;
     if(e.target.closest('.stamp')) return;
     if(!e.shiftKey){st.selectedIds.clear();renderStamps();}
@@ -1815,6 +1817,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   // Divider placement + drag
   let draggingDividerIdx = -1;
   pdfCv.addEventListener('pointerdown', e => {
+    if (e.button === 1) return;
     if (st.mode !== 'divider') return;
     e.preventDefault(); e.stopPropagation();
     const r = pdfCv.getBoundingClientRect();
@@ -2433,6 +2436,7 @@ function zoomOut() { applyZoomPct(st.zoomPct - 10); }
 document.getElementById('zoomInBtn').onclick  = () => zoomIn();
 document.getElementById('zoomOutBtn').onclick = () => zoomOut();
 
+document.getElementById('canvasWrap').addEventListener('pointerdown', e => { if (e.button === 1) e.preventDefault(); });
 document.getElementById('canvasWrap').addEventListener('wheel', e => {
   if (!e.ctrlKey) return;
   e.preventDefault();
