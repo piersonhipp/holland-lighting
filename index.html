@@ -2436,14 +2436,12 @@ function zoomOut() { applyZoomPct(st.zoomPct - 10); }
 document.getElementById('zoomInBtn').onclick  = () => zoomIn();
 document.getElementById('zoomOutBtn').onclick = () => zoomOut();
 
-document.getElementById('canvasWrap').addEventListener('pointerdown', e => { if (e.button === 1) e.preventDefault(); });
-
-// Right-click pan (grab-and-drag like Google Maps)
+// Right-click and middle-click pan (grab-and-drag like Google Maps)
 (function() {
   const wrap = document.getElementById('canvasWrap');
   let panning = false, startX = 0, startY = 0, sl = 0, st_ = 0;
   wrap.addEventListener('pointerdown', e => {
-    if (e.button !== 2) return;
+    if (e.button !== 2 && e.button !== 1) return;
     panning = true;
     startX = e.clientX; startY = e.clientY;
     sl = wrap.scrollLeft; st_ = wrap.scrollTop;
