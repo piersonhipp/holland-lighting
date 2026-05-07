@@ -1750,7 +1750,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   });
 
   pdfCv.addEventListener('pointerdown',e=>{
-    if(e.button===1) return;
+    if(e.button!==0) return;
     if(st.mode!=='place') return;
     const r=pdfCv.getBoundingClientRect();
     let px=e.clientX-r.left, py=e.clientY-r.top;
@@ -1767,7 +1767,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   });
 
   stampLayer.addEventListener('pointerdown',e=>{
-    if(e.button===1) return;
+    if(e.button!==0) return;
     if(st.mode!=='select') return;
     if(e.target.closest('.stamp')) return;
     if(!e.shiftKey){st.selectedIds.clear();renderStamps();}
@@ -1817,7 +1817,7 @@ function bindCanvasEvents(pdfCv, stampLayer, container) {
   // Divider placement + drag
   let draggingDividerIdx = -1;
   pdfCv.addEventListener('pointerdown', e => {
-    if (e.button === 1) return;
+    if (e.button !== 0) return;
     if (st.mode !== 'divider') return;
     e.preventDefault(); e.stopPropagation();
     const r = pdfCv.getBoundingClientRect();
@@ -2437,6 +2437,34 @@ document.getElementById('zoomInBtn').onclick  = () => zoomIn();
 document.getElementById('zoomOutBtn').onclick = () => zoomOut();
 
 document.getElementById('canvasWrap').addEventListener('pointerdown', e => { if (e.button === 1) e.preventDefault(); });
+
+// Right-click pan (grab-and-drag like Google Maps)
+(function() {
+  const wrap = document.getElementById('canvasWrap');
+  let panning = false, startX = 0, startY = 0, sl = 0, st_ = 0;
+  wrap.addEventListener('pointerdown', e => {
+    if (e.button !== 2) return;
+    panning = true;
+    startX = e.clientX; startY = e.clientY;
+    sl = wrap.scrollLeft; st_ = wrap.scrollTop;
+    wrap.style.cursor = 'grabbing';
+    wrap.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  wrap.addEventListener('pointermove', e => {
+    if (!panning) return;
+    wrap.scrollLeft = sl - (e.clientX - startX);
+    wrap.scrollTop  = st_ - (e.clientY - startY);
+  });
+  wrap.addEventListener('pointerup', e => {
+    if (!panning) return;
+    panning = false;
+    wrap.style.cursor = '';
+  });
+  wrap.addEventListener('pointercancel', () => { panning = false; wrap.style.cursor = ''; });
+  wrap.addEventListener('contextmenu', e => e.preventDefault());
+})();
+
 document.getElementById('canvasWrap').addEventListener('wheel', e => {
   if (!e.ctrlKey) return;
   e.preventDefault();
