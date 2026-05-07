@@ -1616,6 +1616,7 @@ function renderStamps() {
     el.style.left=px+'px'; el.style.top=py+'px';
     el.innerHTML=stampSVG(f,st.stampSize,sel);
     el.addEventListener('pointerdown',e=>{
+      if(e.button!==0) return;
       if(st.mode!=='select') return;
       e.stopPropagation();
       if(e.shiftKey){sel?st.selectedIds.delete(s.id):st.selectedIds.add(s.id);renderStamps();return;}
