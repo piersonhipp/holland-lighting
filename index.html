@@ -1340,8 +1340,8 @@ function renderLayoutList() {
   const names = Object.keys(st.layouts)
     .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
     .filter(n => !query || n.toLowerCase().includes(query));
-  if (!Object.keys(st.layouts).length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; return; }
-  if (!names.length) { el.innerHTML = '<div class="status-msg">No matches</div>'; return; }
+  if (!Object.keys(st.layouts).length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; updateSaveBtns(); return; }
+  if (!names.length) { el.innerHTML = '<div class="status-msg">No matches</div>'; updateSaveBtns(); return; }
   el.innerHTML = '';
   names.forEach(name => {
     const item = document.createElement('div');
