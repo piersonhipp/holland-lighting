@@ -1983,31 +1983,39 @@ function makeLegendCanvas(title, subtitle, stamps) {
 
 function makeMultiLegendCanvas(zones, subtitle) {
   const N = zones.length;
-  const COL_W = 2200, LH = 2850, PAD = 80, SW = 90, RH = 180, SY = 260;
-  const LW = COL_W * N;
+  const COLS = Math.min(N, 3), ROWS = Math.ceil(N / COLS);
+  const COL_W = 2200, ROW_H = 2850, PAD = 80, SW = 90, RH = 180, SY = 260;
+  const LW = COL_W * COLS, LH = ROW_H * ROWS;
   const lc = Object.assign(document.createElement('canvas'), { width: LW, height: LH }).getContext('2d');
   lc.fillStyle = '#f1f5f9'; lc.fillRect(0, 0, LW, LH);
 
   zones.forEach((zone, z) => {
-    const ox = z * COL_W;
-    if (z > 0) {
+    const col = z % COLS, row = Math.floor(z / COLS);
+    const ox = col * COL_W, oy = row * ROW_H;
+    // Vertical divider between columns
+    if (col > 0) {
       lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 3;
-      lc.beginPath(); lc.moveTo(ox, 0); lc.lineTo(ox, LH); lc.stroke();
+      lc.beginPath(); lc.moveTo(ox, oy); lc.lineTo(ox, oy + ROW_H); lc.stroke();
+    }
+    // Horizontal divider between rows
+    if (col === 0 && row > 0) {
+      lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 3;
+      lc.beginPath(); lc.moveTo(0, oy); lc.lineTo(LW, oy); lc.stroke();
     }
     // Header
-    lc.fillStyle = '#e2e8f0'; lc.fillRect(ox, 0, COL_W, 200);
+    lc.fillStyle = '#e2e8f0'; lc.fillRect(ox, oy, COL_W, 200);
     lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 2;
-    lc.beginPath(); lc.moveTo(ox, 200); lc.lineTo(ox + COL_W, 200); lc.stroke();
+    lc.beginPath(); lc.moveTo(ox, oy + 200); lc.lineTo(ox + COL_W, oy + 200); lc.stroke();
     lc.fillStyle = '#1e293b'; lc.font = 'bold 72px sans-serif'; lc.textAlign = 'left'; lc.textBaseline = 'middle';
-    lc.fillText(zone.name, ox + PAD, 100);
+    lc.fillText(zone.name, ox + PAD, oy + 100);
     lc.fillStyle = '#64748b'; lc.font = '38px sans-serif';
-    lc.fillText(subtitle, ox + PAD, 160);
+    lc.fillText(subtitle, ox + PAD, oy + 160);
     // Fixture rows
     const counts = {};
     zone.stamps.forEach(s => { counts[s.fixtureId] = (counts[s.fixtureId] || 0) + 1; });
     const used = allFixtures().filter(f => counts[f.id] > 0);
     used.forEach((f, idx) => {
-      const y = SY + idx * RH, mid = y + RH / 2, r = SW / 2 - 3;
+      const y = oy + SY + idx * RH, mid = y + RH / 2, r = SW / 2 - 3;
       const sx = ox + PAD + SW / 2, sy = mid;
       lc.fillStyle = idx % 2 === 0 ? '#ffffff' : '#eef2f7';
       lc.beginPath(); lc.roundRect(ox + PAD - 16, y + 4, COL_W - (PAD - 16) * 2, RH - 8, 8); lc.fill();
@@ -2023,7 +2031,7 @@ function makeMultiLegendCanvas(zones, subtitle) {
       lc.fillText(counts[f.id], ox + COL_W - PAD - 16, mid);
     });
     // Total
-    const totalY = SY + used.length * RH + 30;
+    const totalY = oy + SY + used.length * RH + 30;
     lc.strokeStyle = '#cbd5e1'; lc.lineWidth = 2;
     lc.beginPath(); lc.moveTo(ox + PAD, totalY); lc.lineTo(ox + COL_W - PAD, totalY); lc.stroke();
     lc.fillStyle = '#1e293b'; lc.font = 'bold 48px sans-serif'; lc.textAlign = 'left'; lc.textBaseline = 'middle';
@@ -2072,7 +2080,7 @@ async function exportPDF() {
       name: zoneName,
       stamps: st.stamps.filter(s => getStampZone(s) === z),
     }));
-    for (let i = 0; i < zones.length; i += 5) {
+    for (let i = 0; i < zones.length; i += 9) {
       if (i > 0) doc.addPage();
       _placeLegend(makeMultiLegendCanvas(zones.slice(i, i + 5), subtitle));
     }
