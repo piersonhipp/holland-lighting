@@ -2073,7 +2073,7 @@ async function exportPDF() {
 
   // Use the first plan page's dimensions for ALL pages so nothing looks tiny
   const _refPage = await st.pdfDoc.getPage(st.keptPages[0]);
-  const _refVp = _refPage.getViewport({scale:2});
+  const _refVp = _refPage.getViewport({scale:1.5});
   const pageW = _refVp.width * 0.264583;   // px → mm
   const pageH = _refVp.height * 0.264583;
   const pageOrient = pageW > pageH ? 'l' : 'p';
@@ -2088,7 +2088,7 @@ async function exportPDF() {
     const aW=pageW-pad*2, aH=pageH-pad*2;
     let iW,iH;
     if(aW/aH < lcRatio){iW=aW;iH=aW/lcRatio;}else{iH=aH;iW=aH*lcRatio;}
-    doc.addImage(cv.toDataURL('image/png'),'PNG',(pageW-iW)/2,(pageH-iH)/2,iW,iH);
+    doc.addImage(cv.toDataURL('image/jpeg',0.80),'JPEG',(pageW-iW)/2,(pageH-iH)/2,iW,iH);
   }
 
   if (st.dividers.length) {
@@ -2108,7 +2108,7 @@ async function exportPDF() {
   const _wrap=document.getElementById('canvasWrap');
   const _availW=_wrap.clientWidth-40, _availH=_wrap.clientHeight-40;
   for(let i=0;i<st.keptPages.length;i++){
-    const orig=st.keptPages[i],page=await st.pdfDoc.getPage(orig),vp=page.getViewport({scale:2});
+    const orig=st.keptPages[i],page=await st.pdfDoc.getPage(orig),vp=page.getViewport({scale:1.5});
     const oc=document.createElement('canvas');oc.width=vp.width;oc.height=vp.height;
     const ctx=oc.getContext('2d');
     await page.render({canvasContext:ctx,viewport:vp}).promise;
@@ -2158,7 +2158,7 @@ async function exportPDF() {
     }
     const pW=vp.width*.264583,pH=vp.height*.264583;
     doc.addPage([pW,pH],pW>pH?'l':'p');
-    doc.addImage(oc.toDataURL('image/png'),'PNG',0,0,pW,pH);
+    doc.addImage(oc.toDataURL('image/jpeg',0.80),'JPEG',0,0,pW,pH);
   }
   doc.save(exportName.trim().replace(/\.pdf$/i,'')+'.pdf');
 }
