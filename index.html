@@ -1084,7 +1084,9 @@ async function saveLayout(name) {
   if (st.pdfBuffer) {
     try {
       const safeName = name.replace(/[^a-z0-9_-]/gi, '_');
-      const uploadPath = st.layouts[name]?.pdf_path || `${safeName}_${Date.now()}.pdf`;
+      const existingPath = st.layouts[name]?.pdf_path;
+      const sharedWithAnother = existingPath && Object.entries(st.layouts).some(([n, l]) => n !== name && l.pdf_path === existingPath);
+      const uploadPath = (existingPath && !sharedWithAnother) ? existingPath : `${safeName}_${Date.now()}.pdf`;
       const blob = new Blob([st.pdfBuffer], { type: 'application/pdf' });
       const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
       const { error: uploadErr } = await Promise.race([
