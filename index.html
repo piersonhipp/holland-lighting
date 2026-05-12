@@ -2440,9 +2440,18 @@ document.getElementById('dividerBtn').onclick=()=>{
     document.getElementById('dividerBtn').classList.add('divider-active');
   }
 };
-function applyZoomPct(pct) {
+async function applyZoomPct(pct, anchor) {
+  const oldZoom = st.zoomPct;
   st.zoomPct = Math.max(10, Math.min(500, Math.round(pct / 10) * 10));
-  if (st.pdfDoc) renderPdfPage();
+  if (st.pdfDoc) {
+    await renderPdfPage();
+    if (anchor) {
+      const ratio = st.zoomPct / oldZoom;
+      const wrap = document.getElementById('canvasWrap');
+      wrap.scrollLeft = (anchor.scrollLeft + anchor.mouseX) * ratio - anchor.mouseX;
+      wrap.scrollTop  = (anchor.scrollTop  + anchor.mouseY) * ratio - anchor.mouseY;
+    }
+  }
 }
 function zoomIn()  { applyZoomPct(st.zoomPct + 10); }
 function zoomOut() { applyZoomPct(st.zoomPct - 10); }
@@ -2480,7 +2489,15 @@ document.getElementById('zoomOutBtn').onclick = () => zoomOut();
 document.getElementById('canvasWrap').addEventListener('wheel', e => {
   if (!e.ctrlKey) return;
   e.preventDefault();
-  e.deltaY < 0 ? zoomIn() : zoomOut();
+  const wrap = e.currentTarget;
+  const rect = wrap.getBoundingClientRect();
+  const anchor = {
+    mouseX: e.clientX - rect.left,
+    mouseY: e.clientY - rect.top,
+    scrollLeft: wrap.scrollLeft,
+    scrollTop: wrap.scrollTop,
+  };
+  applyZoomPct(st.zoomPct + (e.deltaY < 0 ? 10 : -10), anchor);
 }, { passive: false });
 
 document.addEventListener('keydown', e => {
