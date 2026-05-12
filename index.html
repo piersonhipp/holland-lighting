@@ -1181,7 +1181,9 @@ async function renameLayout(name) {
   }
 }
 
+let _openLayoutSeq = 0;
 async function openLayout(name) {
+  const seq = ++_openLayoutSeq;
   if (st.currentLayout === name) return;
   if (st.dirty) {
     const confirmed = await showConfirm(
@@ -1228,6 +1230,7 @@ async function openLayout(name) {
     if (loadingItem) loadingItem.classList.add('loading');
     const { data } = await sb.storage.from('pdfs').download(layout.pdf_path);
     if (loadingItem) loadingItem.classList.remove('loading');
+    if (seq !== _openLayoutSeq) return;
     if (data) {
       const buf = await data.arrayBuffer();
       st.pdfBuffer = buf.slice(0);
