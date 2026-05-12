@@ -1091,7 +1091,7 @@ async function saveLayout(name) {
         sb.storage.from('pdfs').upload(uploadPath, blob, { upsert: true }),
         timeout,
       ]);
-      if (!uploadErr) pdf_path = uploadPath;
+      if (!uploadErr) { pdf_path = uploadPath; st.pdfPath = uploadPath; }
       else console.warn('[save] PDF upload failed (layout will still save):', uploadErr.message);
     } catch (e) {
       console.warn('[save] PDF upload error (layout will still save):', e.message);
@@ -1217,7 +1217,7 @@ async function openLayout(name) {
   }
 
   // If same PDF is already loaded, just apply stamps
-  if (st.pdfDoc && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); initHistory(); prerenderPages(); return; }
+  if (st.pdfDoc && layout.pdf_path && st.pdfPath === layout.pdf_path) { apply(); renderPdfPage(); initHistory(); prerenderPages(); return; }
 
   // Try loading PDF from Supabase storage
   if (layout.pdf_path) {
