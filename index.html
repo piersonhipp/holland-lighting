@@ -530,30 +530,28 @@
   <div id="appBody">
     <div id="sidebar">
       <div id="sidebarTop">
+      <button class="sidebar-btn" id="catalogBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Choose from Catalog</button>
+      <div style="position:relative">
+        <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
+        <div id="customDialog">
+          <div class="dlg-label">Add Custom Stamp</div>
+          <input class="dlg-input" id="csName" placeholder="Name (e.g. Step Light)" maxlength="20">
+          <input class="dlg-input" id="csLetter" placeholder="Letter (1–2 chars)" maxlength="2">
+          <select class="dlg-select" id="csShape"></select>
+          <div class="dlg-label" style="margin-top:4px">Color</div>
+          <div class="color-row" id="csColorRow"></div>
+          <input type="color" class="color-picker" id="csColorPicker" value="#22C55E">
+          <div class="dlg-row">
+            <button class="dlg-btn" id="csCancelBtn">Cancel</button>
+            <button class="dlg-btn primary" id="csAddBtn">Add</button>
+          </div>
+        </div>
+      </div>
       <div class="section-label">Fixtures</div>
       <div id="fixtureList"></div>
       <div id="sidebarSpacer"></div>
       <div id="customSection">
-        <div class="section-label">Custom Stamps</div>
         <div id="customList"></div>
-        <button class="sidebar-btn" id="catalogBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Choose from Catalog</button>
-        <div style="position:relative">
-          <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
-          <div id="customDialog">
-            <div class="dlg-label">Add Custom Stamp</div>
-            <input class="dlg-input" id="csName" placeholder="Name (e.g. Step Light)" maxlength="20">
-            <input class="dlg-input" id="csLetter" placeholder="Letter (1–2 chars)" maxlength="2">
-            <select class="dlg-select" id="csShape"></select>
-            <div class="dlg-label" style="margin-top:4px">Color</div>
-            <div class="color-row" id="csColorRow"></div>
-            <input type="color" class="color-picker" id="csColorPicker" value="#22C55E">
-            <div class="dlg-row">
-              <button class="dlg-btn" id="csCancelBtn">Cancel</button>
-              <button class="dlg-btn primary" id="csAddBtn">Add</button>
-            </div>
-          </div>
-        </div>
-      </div>
       </div>
       <div id="layoutMgr">
         <div class="section-label">Saved Layouts</div>
@@ -703,6 +701,7 @@ const FIXTURES = [
   { id:'disc',    label:'Disc',            shape:'circle',      color:'#1E3A8A', letter:'D' },
   { id:'fan',     label:'Ceiling Fan',     shape:'plus',        color:'#22C55E', letter:'F' },
   { id:'esconce', label:'Exterior Sconce', shape:'triangle',    color:'#92400E', letter:'E' },
+  { id:'tvoutlet', label:'TV Outlet',       shape:'square',      color:'#F97316', letter:'TV' },
 ];
 const CUSTOM_SHAPES = ['circle','square','diamond','triangle','plus','hexagon','roundedrect'];
 const CUSTOM_COLORS = ['#EF4444','#F97316','#EAB308','#4ADE80','#15803D','#06B6D4','#3B82F6','#8B5CF6','#EC4899','#92400E','#94A3B8'];
