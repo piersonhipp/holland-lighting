@@ -2442,7 +2442,7 @@ document.getElementById('dividerBtn').onclick=()=>{
 };
 async function applyZoomPct(pct, anchor) {
   const oldZoom = st.zoomPct;
-  st.zoomPct = Math.max(10, Math.min(500, Math.round(pct / 10) * 10));
+  st.zoomPct = Math.max(20, Math.min(500, Math.round(pct / 20) * 20));
   if (st.pdfDoc) {
     await renderPdfPage();
     if (anchor) {
@@ -2453,8 +2453,8 @@ async function applyZoomPct(pct, anchor) {
     }
   }
 }
-function zoomIn()  { applyZoomPct(st.zoomPct + 10); }
-function zoomOut() { applyZoomPct(st.zoomPct - 10); }
+function zoomIn()  { applyZoomPct(st.zoomPct + 20); }
+function zoomOut() { applyZoomPct(st.zoomPct - 20); }
 
 document.getElementById('zoomInBtn').onclick  = () => zoomIn();
 document.getElementById('zoomOutBtn').onclick = () => zoomOut();
@@ -2497,7 +2497,7 @@ document.getElementById('canvasWrap').addEventListener('wheel', e => {
     scrollLeft: wrap.scrollLeft,
     scrollTop: wrap.scrollTop,
   };
-  applyZoomPct(st.zoomPct + (e.deltaY < 0 ? 10 : -10), anchor);
+  applyZoomPct(st.zoomPct + (e.deltaY < 0 ? 20 : -20), anchor);
 }, { passive: false });
 
 document.addEventListener('keydown', e => {
