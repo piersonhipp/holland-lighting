@@ -1673,7 +1673,7 @@ async function renderPdfPage() {
     if (spinner) spinner.style.display = 'none';
   }
 
-  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}  (orig p.${orig})${flipped?' [flipped]':''}  •  ${st.pdfName}`;
+  document.getElementById('pageInfo').textContent=`Page ${st.pageIdx+1} / ${st.keptPages.length}${flipped?' [flipped]':''}`;
   document.getElementById('prevPage').disabled=st.pageIdx<=0;
   document.getElementById('nextPage').disabled=st.pageIdx>=st.keptPages.length-1;
   document.getElementById('flipBtn').classList.toggle('flipped', flipped);
@@ -2922,7 +2922,7 @@ canvasWrap.addEventListener('drop', async e => {
           <h4>Navigating Pages</h4>
           <ul>
             <li>Use the <strong>&#8249;</strong> and <strong>&#8250;</strong> buttons in the toolbar to move between pages</li>
-            <li>The page indicator shows <em>Page X / Y (orig p.Z)</em> and the loaded filename</li>
+            <li>The page indicator shows <em>Page X / Y</em> (with <em>[flipped]</em> appended when the page is mirrored)</li>
             <li>Each page stores its own stamps independently</li>
           </ul>
           <div class="help-tip"><strong>Tip:</strong> To close the current plan and start a new one, click <strong>&#x2715; Exit</strong> in the header. You will be prompted to save any unsaved changes first.</div>
