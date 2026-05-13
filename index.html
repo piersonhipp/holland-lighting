@@ -459,7 +459,7 @@
   /* Confirm dialog */
   #confirmModal, #saveAsModal {
     display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.4);
-    backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); z-index: 10001; align-items: center; justify-content: center;
   }
   #confirmModal.open, #saveAsModal.open { display: flex; }
   .confirm-box {
@@ -682,10 +682,10 @@
 
 <!-- ── JOBS MODAL ─────────────────────────────────────────────────────── -->
 <div id="jobsModal">
-  <div class="confirm-box" style="width:min(400px,92vw)">
+  <div class="confirm-box" style="width:min(820px,92vw);max-height:88vh;display:flex;flex-direction:column">
     <div class="confirm-title">Jobs</div>
     <input id="jobSearch" class="dlg-input" placeholder="Search jobs…" style="margin:10px 0 6px;width:100%">
-    <div id="jobList" style="max-height:300px;overflow-y:auto;margin-bottom:10px"></div>
+    <div id="jobList" style="flex:1;overflow-y:auto;margin-bottom:10px"></div>
     <div class="confirm-actions">
       <button class="confirm-cancel" id="jobsClose">Close</button>
     </div>
