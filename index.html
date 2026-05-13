@@ -2098,7 +2098,7 @@ function makeMultiLegendCanvas(zones, subtitle) {
 
 async function exportPDF() {
   if(!st.pdfDoc||!st.keptPages.length) return alert('No PDF loaded.');
-  const defaultName = (st.currentLayout || st.pdfName || 'lighting-layout');
+  const defaultName = (st.currentLayout || st.pdfName || 'lighting-layout') + (st.activeSpec ? ` — Spec ${st.activeSpec}` : '');
   const exportName = prompt('Save PDF as:', defaultName);
   if(!exportName || !exportName.trim()) return;
   let jsPDF; try{jsPDF=await loadJsPDF();}catch(e){return alert('Could not load jsPDF: '+e.message);}
