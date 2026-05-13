@@ -687,6 +687,19 @@
   </div>
 </div>
 
+<!-- ── SPEC PICKER MODAL ─────────────────────────────────────────────── -->
+<div id="specPickerModal">
+  <div id="specPickerBox">
+    <div class="confirm-title" style="margin-bottom:18px">Electrical Spec</div>
+    <div id="specPickerBtns">
+      <button class="spec-picker-btn" data-spec="A">A</button>
+      <button class="spec-picker-btn" data-spec="B">B</button>
+      <button class="spec-picker-btn" data-spec="C">C</button>
+    </div>
+    <button class="confirm-cancel" id="specPickerClose" style="margin-top:18px;width:100%">Close</button>
+  </div>
+</div>
+
 <!-- ── CONFIRM MODAL ────────────────────────────────────────────────────── -->
 <div id="confirmModal">
   <div class="confirm-box">
@@ -2863,21 +2876,6 @@ canvasWrap.addEventListener('drop', async e => {
 #jobsModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); backdrop-filter:blur(2px); align-items:center; justify-content:center; }
 #jobsModal.open { display:flex; }
 #jobList .layout-item { font-size:13px; }
-</style>
-
-<!-- ── SPEC MODAL ────────────────────────────────────────────────────── -->
-<div id="specPickerModal">
-  <div id="specPickerBox">
-    <div class="confirm-title" style="margin-bottom:18px">Electrical Spec</div>
-    <div id="specPickerBtns">
-      <button class="spec-picker-btn" data-spec="A">A</button>
-      <button class="spec-picker-btn" data-spec="B">B</button>
-      <button class="spec-picker-btn" data-spec="C">C</button>
-    </div>
-    <button class="confirm-cancel" id="specPickerClose" style="margin-top:18px;width:100%">Close</button>
-  </div>
-</div>
-<style>
 #specPickerModal { display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.55); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
 #specPickerModal.open { display:flex; }
 #specPickerBox { background:var(--navy-mid); border:1px solid var(--border); border-radius:16px; padding:28px 32px; min-width:280px; text-align:center; }
@@ -2887,6 +2885,7 @@ canvasWrap.addEventListener('drop', async e => {
 .spec-picker-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,0.35); }
 #specModalBtn.spec-active { background:var(--blue); color:#fff; border-color:var(--blue); }
 </style>
+
 
 <!-- ── HELP OVERLAY ───────────────────────────────────────────────────── -->
 <style>
