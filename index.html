@@ -532,7 +532,7 @@
   <div id="appBody">
     <div id="sidebar">
       <div id="sidebarTop">
-      <button class="sidebar-btn" id="catalogBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Choose from Catalog</button>
+      <button class="sidebar-btn" id="catalogBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Catalog</button>
       <div style="position:relative">
         <button class="sidebar-btn" id="addCustomBtn">+ Add Custom</button>
         <div id="customDialog">
@@ -1333,7 +1333,7 @@ function renderFixtureList() {
   st.stamps
     .forEach(s => { counts[s.fixtureId] = (counts[s.fixtureId]||0)+1; });
   el.innerHTML = '';
-  allFixtures().forEach(f => {
+  FIXTURES.forEach(f => {
     const placing = st.mode==='place' && st.activeFixture===f.id;
     const count = counts[f.id]||0;
     const row = document.createElement('div');
