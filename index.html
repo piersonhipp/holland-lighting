@@ -2676,6 +2676,8 @@ function switchSpec(newSpec) {
     // First activation — current stamps become Spec A
     st.specStamps = { A: JSON.parse(JSON.stringify(st.stamps)), B: [], C: [] };
     st.activeSpec = 'A';
+    st.dirty = true;
+    updateSpecUI();
   }
   if (st.activeSpec === newSpec) return;
   // Commit current stamps back to the active spec before switching
