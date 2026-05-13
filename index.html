@@ -1108,8 +1108,8 @@ async function saveLayout(name, type = 'plan') {
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
     type,
-    specStamps: st.specStamps ? JSON.parse(JSON.stringify(st.specStamps)) : null,
-    activeSpec: st.activeSpec,
+    specStamps: (type === 'job') ? null : (st.specStamps ? JSON.parse(JSON.stringify(st.specStamps)) : null),
+    activeSpec: (type === 'job') ? null : st.activeSpec,
     pdfName: st.pdfName,
     keptPages: [...st.keptPages],
     stampSize: st.stampSize,
