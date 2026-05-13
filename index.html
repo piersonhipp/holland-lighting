@@ -526,6 +526,7 @@
     <div class="sep"></div>
         <button class="hdr-btn" id="adminBtn" style="display:none">⚙ Manage Users</button>
     <span class="user-pill" id="userPill"></span>
+    <button class="hdr-btn" id="helpBtn">? Help</button>
     <button class="hdr-btn" id="signOutBtn">Sign out</button>
   </div>
   <div id="appBody">
@@ -548,7 +549,7 @@
           </div>
         </div>
       </div>
-      <div class="section-label">Fixtures</div>
+      <div class="section-label">Standard</div>
       <div id="fixtureList"></div>
       <div id="sidebarSpacer"></div>
       <div id="customSection">
@@ -2684,6 +2685,256 @@ canvasWrap.addEventListener('drop', async e => {
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
+})();
+</script>
+<!-- ── HELP OVERLAY ───────────────────────────────────────────────────── -->
+<style>
+#helpOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;}
+#helpOverlay.open{display:flex;}
+#helpPanel{background:var(--navy);border:1px solid var(--border);border-radius:14px;width:min(880px,96vw);height:min(660px,90vh);display:flex;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.55);}
+#helpNav{width:192px;flex-shrink:0;background:var(--navy-mid);border-right:1px solid var(--border);padding:14px 0;display:flex;flex-direction:column;overflow-y:auto;}
+#helpNav h3{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);padding:0 16px 10px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.help-nav-item{padding:9px 16px;font-size:12px;font-weight:500;color:var(--text-dim);cursor:pointer;border-left:2px solid transparent;transition:all 0.12s;}
+.help-nav-item:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.help-nav-item.active{color:var(--blue-hover);border-left-color:var(--blue);background:rgba(37,99,235,0.12);}
+#helpMain{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#helpHdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#helpHdr h2{font-size:16px;font-weight:700;color:var(--text);margin:0;}
+#helpClose{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:2px 7px;line-height:1;border-radius:4px;transition:all 0.12s;font-family:inherit;}
+#helpClose:hover{color:var(--text);background:rgba(255,255,255,0.1);}
+#helpBody{flex:1;overflow-y:auto;padding:22px 26px;}
+.help-section{display:none;}
+.help-section.active{display:block;}
+.help-section h4{font-size:11px;font-weight:800;color:var(--blue-hover);margin:20px 0 7px;text-transform:uppercase;letter-spacing:0.08em;}
+.help-section h4:first-child{margin-top:0;}
+.help-section p{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;}
+.help-section ul{list-style:none;margin:0 0 12px;padding:0;}
+.help-section ul li{font-size:13px;color:var(--text-dim);line-height:1.65;padding:3px 0 3px 18px;position:relative;}
+.help-section ul li::before{content:"›";position:absolute;left:0;color:var(--blue-hover);font-weight:700;}
+.help-kbd{display:inline-block;background:var(--navy-mid);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);white-space:nowrap;}
+.help-tip{background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.28);border-radius:7px;padding:10px 14px;margin:14px 0;font-size:12px;color:var(--text-dim);line-height:1.6;}
+.help-tip strong{color:var(--blue-hover);}
+.help-shortcut-table{width:100%;border-collapse:collapse;margin-top:4px;}
+.help-shortcut-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);}
+.help-shortcut-table td{font-size:12px;color:var(--text-dim);padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.help-shortcut-table td:first-child{color:var(--text);white-space:nowrap;min-width:180px;}
+</style>
+
+<div id="helpOverlay">
+  <div id="helpPanel">
+    <div id="helpNav">
+      <h3>Help Topics</h3>
+      <div class="help-nav-item active" data-sec="start">Getting Started</div>
+      <div class="help-nav-item" data-sec="place">Placing Fixtures</div>
+      <div class="help-nav-item" data-sec="custom">Custom Fixtures</div>
+      <div class="help-nav-item" data-sec="select">Selecting &amp; Moving</div>
+      <div class="help-nav-item" data-sec="edit">Edit Operations</div>
+      <div class="help-nav-item" data-sec="zones">Zones &amp; Dividers</div>
+      <div class="help-nav-item" data-sec="page">Page Controls</div>
+      <div class="help-nav-item" data-sec="save">Saving &amp; Exporting</div>
+      <div class="help-nav-item" data-sec="keys">Keyboard Shortcuts</div>
+    </div>
+    <div id="helpMain">
+      <div id="helpHdr">
+        <h2 id="helpPanelTitle">Getting Started</h2>
+        <button id="helpClose">&#x2715;</button>
+      </div>
+      <div id="helpBody">
+
+        <div class="help-section active" id="help-sec-start">
+          <h4>Upload a PDF</h4>
+          <p>Click the upload button in the center of the canvas, or drag a PDF file onto the page to load floor plans. Only PDF files are accepted.</p>
+          <h4>Page Selection</h4>
+          <p>After uploading, a page picker appears with thumbnails of every PDF page. Check the pages you want to include and click <strong>Confirm</strong>. Use <strong>Select All</strong> or <strong>Deselect All</strong> for quick bulk selection.</p>
+          <h4>Navigating Pages</h4>
+          <ul>
+            <li>Use the <strong>&#8249;</strong> and <strong>&#8250;</strong> buttons in the toolbar to move between pages</li>
+            <li>The page indicator shows <em>Page X / Y (orig p.Z)</em> and the loaded filename</li>
+            <li>Each page stores its own stamps independently</li>
+          </ul>
+          <div class="help-tip"><strong>Tip:</strong> To close the current plan and start a new one, click <strong>&#x2715; Exit</strong> in the header. You will be prompted to save any unsaved changes first.</div>
+        </div>
+
+        <div class="help-section" id="help-sec-place">
+          <h4>Activating Placement Mode</h4>
+          <p>In the left sidebar under <strong>Standard Fixtures</strong>, find the fixture you want and click its <strong>+</strong> button. The row turns green and the cursor becomes a crosshair — you are now in placement mode.</p>
+          <h4>Placing Stamps</h4>
+          <ul>
+            <li>Click anywhere on the floor plan to drop a stamp at that location</li>
+            <li>Continue clicking to place multiple stamps without re-clicking the + button</li>
+            <li>Press <span class="help-kbd">Space</span> or <span class="help-kbd">Esc</span> to exit placement mode</li>
+          </ul>
+          <h4>Snap Guides</h4>
+          <p>While in placement mode, yellow dashed alignment guides appear when your cursor hovers near an existing stamp. The cursor auto-snaps to align with it when within 40 pixels.</p>
+          <h4>Stamp Size</h4>
+          <p>The <strong>Size</strong> input in the toolbar sets the diameter of all stamps on the current page (range 8–80 px, default 24). Adjustments apply immediately to all existing stamps on that page.</p>
+          <div class="help-tip"><strong>Tip:</strong> Fixture counts in the sidebar reflect the <em>current page only</em>. A dash (&#x2014;) means zero stamps of that type on this page.</div>
+        </div>
+
+        <div class="help-section" id="help-sec-custom">
+          <h4>Create a Custom Fixture</h4>
+          <p>Click <strong>+ Add Custom</strong> at the top of the sidebar. Fill in the dialog:</p>
+          <ul>
+            <li><strong>Name</strong> — up to 20 characters (e.g., "Step Light")</li>
+            <li><strong>Letter</strong> — 1–2 character code shown on the stamp (auto-filled from name)</li>
+            <li><strong>Shape</strong> — Circle, Square, Diamond, Triangle, Plus, Hexagon, or Rounded Rect</li>
+            <li><strong>Color</strong> — 11 preset swatches or full custom color picker</li>
+          </ul>
+          <p>Click <strong>Add</strong> to save the fixture and immediately enter placement mode for it.</p>
+          <h4>Add from Catalog</h4>
+          <p>Click <strong>Choose from Catalog</strong> to browse manufacturer SKUs organized by category. Use the search box to filter by name, SKU code, or finish. Select a SKU, assign a shape and color, then click <strong>Add &amp; Place</strong>. If that fixture already exists it will be reused without creating a duplicate.</p>
+          <h4>Deleting Custom Fixtures</h4>
+          <p>Click the <strong>&#xD7;</strong> button on any custom fixture row to remove it. All stamps of that fixture are removed from every page.</p>
+        </div>
+
+        <div class="help-section" id="help-sec-select">
+          <h4>Single Selection</h4>
+          <p>Click any stamp to select it. A glow effect indicates it is selected.</p>
+          <h4>Multi-Selection</h4>
+          <ul>
+            <li><span class="help-kbd">Shift</span> + Click — toggles a stamp in or out of the current selection</li>
+            <li><strong>Lasso</strong> — click and drag on an empty part of the canvas to draw a freeform selection polygon. Release to select all stamps inside it.</li>
+          </ul>
+          <h4>Moving Stamps</h4>
+          <p>Click and drag any selected stamp to reposition it. If multiple stamps are selected, all move together. Stamps are constrained to the canvas boundary.</p>
+          <h4>Clearing Selection</h4>
+          <ul>
+            <li>Press <span class="help-kbd">Esc</span> to deselect everything</li>
+            <li>Click any empty area of the canvas to deselect</li>
+          </ul>
+          <div class="help-tip"><strong>Tip:</strong> After a lasso selection you can immediately drag to move all selected stamps without clicking again.</div>
+        </div>
+
+        <div class="help-section" id="help-sec-edit">
+          <h4>Copy &amp; Paste</h4>
+          <ul>
+            <li><span class="help-kbd">Ctrl+C</span> or the toolbar <strong>Copy</strong> button — copies all selected stamps</li>
+            <li><span class="help-kbd">Ctrl+V</span> or the toolbar <strong>Paste</strong> button — pastes at the original positions. The button label shows the clipboard count.</li>
+            <li>Copy on one page, navigate to another page, then paste to duplicate a fixture arrangement across pages</li>
+          </ul>
+          <h4>Delete</h4>
+          <p>Press <span class="help-kbd">Delete</span> or <span class="help-kbd">Backspace</span>, or click the <strong>&#x2715; Delete</strong> toolbar button to remove all selected stamps.</p>
+          <h4>Undo / Redo</h4>
+          <ul>
+            <li><span class="help-kbd">Ctrl+Z</span> — undo the last action (placement, move, or delete)</li>
+            <li><span class="help-kbd">Ctrl+Y</span> or <span class="help-kbd">Ctrl+Shift+Z</span> — redo</li>
+            <li>Undo history is per session and resets when a new PDF is loaded</li>
+          </ul>
+        </div>
+
+        <div class="help-section" id="help-sec-zones">
+          <h4>Enabling Zones Mode</h4>
+          <p>Click the <strong>&#x229F; Zones</strong> button in the toolbar. It highlights blue and the cursor changes to a column-resize icon.</p>
+          <h4>Placing &amp; Moving Dividers</h4>
+          <ul>
+            <li>Click anywhere on the plan to place a vertical orange divider line</li>
+            <li>Click near an existing divider and drag horizontally to reposition it</li>
+            <li>Drag a divider all the way to the left or right edge to remove it</li>
+          </ul>
+          <h4>Renaming Zones</h4>
+          <p>Each zone shows a label above its divider. Click the <strong>&#x270E;</strong> pencil icon next to a label to rename the zone (e.g., "Unit 101", "Master Bed").</p>
+          <h4>Per-Page Dividers</h4>
+          <p>Dividers can be positioned independently per page. When you drag a divider on a specific page, that page stores its own positions separate from the global layout.</p>
+          <h4>Effect on Exported PDF</h4>
+          <p>Stamps are automatically detected in whichever zone they are physically located — you do not need to manually assign a stamp to a zone. When zones are defined, the exported PDF generates separate legend sections per zone, each showing only the fixtures within that zone and their counts.</p>
+        </div>
+
+        <div class="help-section" id="help-sec-page">
+          <h4>Page Navigation</h4>
+          <ul>
+            <li>Click <strong>&#8249;</strong> / <strong>&#8250;</strong> in the toolbar to step through pages</li>
+            <li>The page indicator shows the current page, total pages, original PDF page number, and whether the page is flipped</li>
+          </ul>
+          <h4>Zoom</h4>
+          <ul>
+            <li><span class="help-kbd">Ctrl++</span> / <span class="help-kbd">Ctrl+&#x2212;</span> or the <strong>+</strong> / <strong>&#x2212;</strong> toolbar buttons — zoom in or out in 20% steps (range 20%–500%)</li>
+            <li><span class="help-kbd">Ctrl+0</span> — reset zoom to 100%</li>
+            <li><span class="help-kbd">Ctrl+Scroll</span> — zoom centered on the cursor position</li>
+          </ul>
+          <h4>Panning</h4>
+          <ul>
+            <li>Hold the <strong>right mouse button</strong> and drag to pan</li>
+          </ul>
+          <h4>Flip Page</h4>
+          <p>Click <strong>&#x21C4; Flip</strong> to mirror the current page horizontally. Useful when plans are drawn as mirror images. The page indicator shows <em>[flipped]</em> when active. Stamps and dividers all respect the flipped state.</p>
+        </div>
+
+        <div class="help-section" id="help-sec-save">
+          <h4>Saving a Layout</h4>
+          <ul>
+            <li><strong>Save As</strong> — opens a dialog to name and save the layout to the cloud. If the name already exists you will be prompted to replace it.</li>
+            <li><strong>Save</strong> — overwrites the currently open named layout. Only available after the layout has been saved at least once with Save As.</li>
+          </ul>
+          <p>All stamp positions, zones, page selections, custom fixtures, flip states, and the PDF file are stored in the cloud and tied to your account.</p>
+          <h4>Layout Manager</h4>
+          <ul>
+            <li>All saved layouts are listed at the bottom of the sidebar; use the search box to filter by name</li>
+            <li>Click a layout name to open it</li>
+            <li>The <strong>&#x22EF;</strong> menu on each layout row offers: <em>Rename</em>, <em>Duplicate</em>, <em>Delete</em></li>
+            <li>The active layout is highlighted in blue</li>
+          </ul>
+          <h4>Exporting to PDF</h4>
+          <p>Click <strong>&#x2B06; Export PDF</strong> in the toolbar. Enter an output filename when prompted. The exported file contains:</p>
+          <ul>
+            <li><strong>Legend pages</strong> — each fixture type with its count; one legend per zone if zones are defined</li>
+            <li><strong>Floor plan pages</strong> — original PDF pages with stamps, dividers, and zone labels rendered on top</li>
+          </ul>
+          <div class="help-tip"><strong>Tip:</strong> Export is available any time a PDF is loaded — you do not need to save the layout first.</div>
+        </div>
+
+        <div class="help-section" id="help-sec-keys">
+          <table class="help-shortcut-table">
+            <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><span class="help-kbd">Ctrl+Z</span></td><td>Undo</td></tr>
+              <tr><td><span class="help-kbd">Ctrl+Y</span> / <span class="help-kbd">Ctrl+Shift+Z</span></td><td>Redo</td></tr>
+              <tr><td><span class="help-kbd">Ctrl+C</span></td><td>Copy selected stamps</td></tr>
+              <tr><td><span class="help-kbd">Ctrl+V</span></td><td>Paste stamps</td></tr>
+              <tr><td><span class="help-kbd">Delete</span> / <span class="help-kbd">Backspace</span></td><td>Delete selected stamps</td></tr>
+              <tr><td><span class="help-kbd">Ctrl++</span></td><td>Zoom in</td></tr>
+              <tr><td><span class="help-kbd">Ctrl+&#x2212;</span></td><td>Zoom out</td></tr>
+              <tr><td><span class="help-kbd">Ctrl+0</span></td><td>Reset zoom to 100%</td></tr>
+              <tr><td><span class="help-kbd">Ctrl+Scroll</span></td><td>Zoom to cursor position</td></tr>
+              <tr><td><span class="help-kbd">Space</span></td><td>Exit placement mode</td></tr>
+              <tr><td><span class="help-kbd">Esc</span></td><td>Exit placement / clear selection / close dialogs</td></tr>
+              <tr><td>Right-click drag</td><td>Pan canvas</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var overlay = document.getElementById('helpOverlay');
+  document.getElementById('helpBtn').addEventListener('click', function(){
+    overlay.classList.add('open');
+  });
+  document.getElementById('helpClose').addEventListener('click', function(){
+    overlay.classList.remove('open');
+  });
+  overlay.addEventListener('click', function(e){
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+  document.querySelectorAll('.help-nav-item').forEach(function(el){
+    el.addEventListener('click', function(){
+      document.querySelectorAll('.help-nav-item').forEach(function(x){ x.classList.remove('active'); });
+      el.classList.add('active');
+      document.querySelectorAll('.help-section').forEach(function(x){ x.classList.remove('active'); });
+      document.getElementById('help-sec-' + el.dataset.sec).classList.add('active');
+      document.getElementById('helpPanelTitle').textContent = el.textContent;
+      document.getElementById('helpBody').scrollTop = 0;
+    });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && overlay.classList.contains('open')){
+      overlay.classList.remove('open');
+      e.stopPropagation();
+    }
+  }, true);
 })();
 </script>
 </body>
