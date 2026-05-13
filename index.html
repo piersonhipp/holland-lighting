@@ -1117,7 +1117,7 @@ async function saveLayout(name, type = 'plan') {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
     type,
     specStamps: (type === 'job') ? null : (st.specStamps ? JSON.parse(JSON.stringify(st.specStamps)) : null),
-    activeSpec: (type === 'job') ? null : st.activeSpec,
+    activeSpec: st.activeSpec,
     pdfName: st.pdfName,
     keptPages: [...st.keptPages],
     stampSize: st.stampSize,
@@ -1255,8 +1255,10 @@ async function openLayout(name) {
       ? JSON.parse(JSON.stringify(st.specStamps[st.activeSpec] || []))
       : migrate(layout.stamps);
     if (!st.specStamps) {
-      st.specStamps = { A: JSON.parse(JSON.stringify(st.stamps)), B: [], C: [] };
-      st.activeSpec = 'A';
+      const spec = st.activeSpec || 'A';
+      st.specStamps = { A: [], B: [], C: [] };
+      st.specStamps[spec] = JSON.parse(JSON.stringify(st.stamps));
+      st.activeSpec = spec;
     }
     st.keptPages = layout.keptPages || st.keptPages;
     st.stampSize = layout.stampSize || 24;
