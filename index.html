@@ -2677,9 +2677,9 @@ function openSaveAsModal() {
   const okBtn = document.getElementById('saveAsOk');
   const cancelBtn = document.getElementById('saveAsCancel');
 
-  let saveAsType = 'plan';
+  let saveAsType = 'job';
   document.querySelectorAll('.save-type-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.type === 'plan');
+    btn.classList.toggle('active', btn.dataset.type === 'job');
     btn.onclick = () => {
       saveAsType = btn.dataset.type;
       document.querySelectorAll('.save-type-btn').forEach(b => b.classList.toggle('active', b === btn));
