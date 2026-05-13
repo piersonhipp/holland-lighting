@@ -2764,14 +2764,16 @@ function updateSaveBtns() {
 
 function updateSpecUI() {
   const hasPdf = !!st.pdfDoc;
+  const isJob = !!(st.currentLayout && st.layouts[st.currentLayout]?.type === 'job');
+  const showSpec = hasPdf && !isJob;
   const triggerBtn = document.getElementById('specModalBtn');
   const sep = document.getElementById('specSep');
   if (triggerBtn) {
-    triggerBtn.style.display = hasPdf ? '' : 'none';
+    triggerBtn.style.display = showSpec ? '' : 'none';
     triggerBtn.textContent = st.activeSpec ? `Spec ${st.activeSpec}` : 'Spec —';
     triggerBtn.classList.toggle('spec-active', !!st.activeSpec);
   }
-  if (sep) sep.style.display = hasPdf ? '' : 'none';
+  if (sep) sep.style.display = showSpec ? '' : 'none';
   document.querySelectorAll('.spec-picker-btn').forEach(btn => {
     btn.classList.toggle('active', !!st.specStamps && st.activeSpec === btn.dataset.spec);
   });
