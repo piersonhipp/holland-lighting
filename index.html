@@ -593,12 +593,7 @@
         <button class="tool-btn" id="dividerBtn" title="Click to place vertical unit dividers; click near a line to remove it">⊟ Zones</button>
         <button class="tool-btn" id="flipBtn" title="Flip current page horizontally">⇄ Flip</button>
         <div class="sep" id="specSep" style="display:none"></div>
-        <div id="specGroup" style="display:none;align-items:center;gap:4px">
-          <span class="tool-label">Spec</span>
-          <button class="tool-btn spec-btn" id="specBtnA" data-spec="A" title="Switch to Electrical Spec A">A</button>
-          <button class="tool-btn spec-btn" id="specBtnB" data-spec="B" title="Switch to Electrical Spec B">B</button>
-          <button class="tool-btn spec-btn" id="specBtnC" data-spec="C" title="Switch to Electrical Spec C">C</button>
-        </div>
+        <button class="tool-btn" id="specModalBtn" style="display:none;font-weight:700" title="Switch electrical spec">Spec —</button>
         <div class="sep"></div>
         <button class="tool-btn primary" id="exportBtn" title="Export PDF">⬆ Export PDF</button>
       </div>
@@ -2754,16 +2749,17 @@ function updateSaveBtns() {
 
 function updateSpecUI() {
   const hasPdf = !!st.pdfDoc;
-  const hasSpec = !!st.specStamps;
-  const grp = document.getElementById('specGroup');
+  const triggerBtn = document.getElementById('specModalBtn');
   const sep = document.getElementById('specSep');
-  if (grp) {
-    grp.style.display = hasPdf ? 'flex' : 'none';
-    document.querySelectorAll('.spec-btn').forEach(btn => {
-      btn.classList.toggle('active', hasSpec && st.activeSpec === btn.dataset.spec);
-    });
+  if (triggerBtn) {
+    triggerBtn.style.display = hasPdf ? '' : 'none';
+    triggerBtn.textContent = st.activeSpec ? `Spec ${st.activeSpec}` : 'Spec —';
+    triggerBtn.classList.toggle('spec-active', !!st.activeSpec);
   }
   if (sep) sep.style.display = hasPdf ? '' : 'none';
+  document.querySelectorAll('.spec-picker-btn').forEach(btn => {
+    btn.classList.toggle('active', !!st.specStamps && st.activeSpec === btn.dataset.spec);
+  });
 }
 
 function switchSpec(newSpec) {
@@ -2789,9 +2785,20 @@ function switchSpec(newSpec) {
   renderLegend();
 }
 
-['A','B','C'].forEach(function(spec) {
-  const btn = document.getElementById('specBtn' + spec);
-  if (btn) btn.addEventListener('click', function() { switchSpec(spec); });
+document.getElementById('specModalBtn').addEventListener('click', function() {
+  document.getElementById('specPickerModal').classList.add('open');
+});
+document.getElementById('specPickerClose').addEventListener('click', function() {
+  document.getElementById('specPickerModal').classList.remove('open');
+});
+document.getElementById('specPickerModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+document.querySelectorAll('.spec-picker-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    switchSpec(btn.dataset.spec);
+    document.getElementById('specPickerModal').classList.remove('open');
+  });
 });
 document.addEventListener('click', () => { document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open')); });
 
@@ -2858,11 +2865,27 @@ canvasWrap.addEventListener('drop', async e => {
 #jobList .layout-item { font-size:13px; }
 </style>
 
-<!-- ── SPEC BUTTONS ──────────────────────────────────────────────────── -->
+<!-- ── SPEC MODAL ────────────────────────────────────────────────────── -->
+<div id="specPickerModal">
+  <div id="specPickerBox">
+    <div class="confirm-title" style="margin-bottom:18px">Electrical Spec</div>
+    <div id="specPickerBtns">
+      <button class="spec-picker-btn" data-spec="A">A</button>
+      <button class="spec-picker-btn" data-spec="B">B</button>
+      <button class="spec-picker-btn" data-spec="C">C</button>
+    </div>
+    <button class="confirm-cancel" id="specPickerClose" style="margin-top:18px;width:100%">Close</button>
+  </div>
+</div>
 <style>
-.spec-btn { min-width:26px; font-weight:700; letter-spacing:0.03em; }
-.spec-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
-.spec-btn.active:hover { background:var(--blue-hover); border-color:var(--blue-hover); }
+#specPickerModal { display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.55); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
+#specPickerModal.open { display:flex; }
+#specPickerBox { background:var(--navy-mid); border:1px solid var(--border); border-radius:16px; padding:28px 32px; min-width:280px; text-align:center; }
+#specPickerBtns { display:flex; gap:16px; justify-content:center; }
+.spec-picker-btn { width:72px; height:72px; font-size:28px; font-weight:800; border-radius:12px; border:2px solid var(--border); background:var(--navy-dark); color:var(--text-muted); cursor:pointer; transition:all 0.12s; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; }
+.spec-picker-btn:hover:not(.active) { background:rgba(255,255,255,0.08); color:var(--text); border-color:rgba(255,255,255,0.3); }
+.spec-picker-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,0.35); }
+#specModalBtn.spec-active { background:var(--blue); color:#fff; border-color:var(--blue); }
 </style>
 
 <!-- ── HELP OVERLAY ───────────────────────────────────────────────────── -->
