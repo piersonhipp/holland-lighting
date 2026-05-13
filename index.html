@@ -2955,7 +2955,7 @@ canvasWrap.addEventListener('drop', async e => {
           </ul>
           <p>Click <strong>Add</strong> to save the fixture and immediately enter placement mode for it.</p>
           <h4>Add from Catalog</h4>
-          <p>Click <strong>Choose from Catalog</strong> to browse manufacturer SKUs organized by category. Use the search box to filter by name, SKU code, or finish. Select a SKU, assign a shape and color, then click <strong>Add &amp; Place</strong>. If that fixture already exists it will be reused without creating a duplicate.</p>
+          <p>Click <strong>Catalog</strong> to browse manufacturer SKUs organized by category. Use the search box to filter by name, SKU code, or finish. Select a SKU, assign a shape and color, then click <strong>Add &amp; Place</strong>. If that fixture already exists it will be reused without creating a duplicate.</p>
           <h4>Deleting Custom Fixtures</h4>
           <p>Click the <strong>&#xD7;</strong> button on any custom fixture row to remove it. All stamps of that fixture are removed from every page.</p>
         </div>
@@ -3035,10 +3035,24 @@ canvasWrap.addEventListener('drop', async e => {
         <div class="help-section" id="help-sec-save">
           <h4>Saving a Layout</h4>
           <ul>
-            <li><strong>Save As</strong> — opens a dialog to name and save the layout to the cloud. If the name already exists you will be prompted to replace it.</li>
+            <li><strong>Save As</strong> — opens a dialog to name the layout and choose whether it is a <em>Plan</em> or a <em>Job</em>. If the name already exists you will be prompted to replace it.</li>
             <li><strong>Save</strong> — overwrites the currently open named layout. Only available after the layout has been saved at least once with Save As.</li>
           </ul>
-          <p>All stamp positions, zones, page selections, custom fixtures, flip states, and the PDF file are stored in the cloud and tied to your account.</p>
+          <p>All stamp positions, electrical specs, zones, page selections, custom fixtures, flip states, and the PDF file are stored in the cloud and tied to your account.</p>
+          <h4>Plans vs. Jobs</h4>
+          <p>When saving, choose the layout type:</p>
+          <ul>
+            <li><strong>Plan</strong> — a standard floor plan template (shown in the <em>Saved Layouts</em> list in the sidebar)</li>
+            <li><strong>Job</strong> — a job-specific layout with custom stamp selections (shown in the separate <em>Jobs</em> list, accessible via the <strong>Jobs</strong> button next to Saved Layouts)</li>
+          </ul>
+          <h4>Electrical Specs (A / B / C)</h4>
+          <p>Each layout supports three independent electrical spec variants — A, B, and C. Toggle between them using the <strong>Spec A</strong>, <strong>Spec B</strong>, and <strong>Spec C</strong> buttons in the header toolbar.</p>
+          <ul>
+            <li>Switching specs saves the current spec's stamps and loads the selected spec's stamps — all other layout data (zones, pages, custom fixtures) is shared</li>
+            <li>Undo history resets each time you switch specs</li>
+            <li>The active spec is appended to the export filename (e.g., <em>Hadley A KL — Spec B</em>)</li>
+            <li>Specs are saved together in a single layout — no need to maintain three separate files</li>
+          </ul>
           <h4>Layout Manager</h4>
           <ul>
             <li>All saved layouts are listed at the bottom of the sidebar; use the search box to filter by name</li>
