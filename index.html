@@ -1725,7 +1725,7 @@ function renderStamps() {
     const el=document.createElement('div');
     el.className='stamp'+(sel?' selected':'');
     el.style.left=px+'px'; el.style.top=py+'px';
-    el.innerHTML=stampSVG(f,st.stampSize,sel);
+    el.innerHTML=stampSVG(f,Math.round(st.stampSize * st.zoomPct / 100),sel);
     el.addEventListener('pointerdown',e=>{
       if(e.button!==0) return;
       if(st.mode!=='select') return;
@@ -2229,7 +2229,7 @@ async function exportPDF() {
     const _fitScale=Math.min(_availW/_nativeVp.width,_availH/_nativeVp.height);
     st.stamps.filter(s=>s.origPage===orig).forEach(s=>{
       const f=allFixtures().find(x=>x.id===s.fixtureId);if(!f)return;
-      const dx=(pageFlipped?(1-s.nx):s.nx)*vp.width,dy=s.ny*vp.height,sz=st.stampSize,hs=sz/2;
+      const dx=(pageFlipped?(1-s.nx):s.nx)*vp.width,dy=s.ny*vp.height,sz=Math.round(st.stampSize*1.5/_fitScale),hs=sz/2;
       ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.fillStyle=f.color;ctx.globalAlpha=0.70;
       drawShapeCanvas(ctx,f.shape,dx,dy,hs,sz);
       ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.font=`700 ${Math.round(sz*.38)}px sans-serif`;
