@@ -589,6 +589,13 @@
         <div class="sep"></div>
         <button class="tool-btn" id="dividerBtn" title="Click to place vertical unit dividers; click near a line to remove it">⊟ Zones</button>
         <button class="tool-btn" id="flipBtn" title="Flip current page horizontally">⇄ Flip</button>
+        <div class="sep" id="specSep" style="display:none"></div>
+        <div id="specGroup" style="display:none;align-items:center;gap:4px">
+          <span class="tool-label">Spec</span>
+          <button class="tool-btn spec-btn" id="specBtnA" data-spec="A" title="Switch to Electrical Spec A">A</button>
+          <button class="tool-btn spec-btn" id="specBtnB" data-spec="B" title="Switch to Electrical Spec B">B</button>
+          <button class="tool-btn spec-btn" id="specBtnC" data-spec="C" title="Switch to Electrical Spec C">C</button>
+        </div>
         <div class="sep"></div>
         <button class="tool-btn primary" id="exportBtn" title="Export PDF">⬆ Export PDF</button>
       </div>
@@ -913,6 +920,8 @@ let st = {
   dividers: [],
   zoneNames: [],
   pagePositions: {},
+  specStamps: null,
+  activeSpec: null,
   dirty: false,
 };
 function curPage() { return st.keptPages[st.pageIdx]; }
@@ -1069,8 +1078,14 @@ async function saveLayout(name) {
   const overlay = document.getElementById('saveOverlay');
   overlay.classList.add('active');
   try {
+  // Sync active spec stamps before saving
+  if (st.specStamps && st.activeSpec) {
+    st.specStamps[st.activeSpec] = JSON.parse(JSON.stringify(st.stamps));
+  }
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
+    specStamps: st.specStamps ? JSON.parse(JSON.stringify(st.specStamps)) : null,
+    activeSpec: st.activeSpec,
     pdfName: st.pdfName,
     keptPages: [...st.keptPages],
     stampSize: st.stampSize,
@@ -1198,10 +1213,15 @@ async function openLayout(name) {
   if (!layout) return;
 
   function apply() {
-    st.stamps = (layout.stamps || []).map(s => {
+    const migrate = arr => (arr || []).map(s => {
       if (s.nx === undefined && s.x !== undefined) { s.nx = s.x/1000; s.ny = s.y/1000; }
       return s;
     });
+    st.specStamps = layout.specStamps ? JSON.parse(JSON.stringify(layout.specStamps)) : null;
+    st.activeSpec = layout.activeSpec || null;
+    st.stamps = (st.specStamps && st.activeSpec)
+      ? JSON.parse(JSON.stringify(st.specStamps[st.activeSpec] || []))
+      : migrate(layout.stamps);
     st.keptPages = layout.keptPages || st.keptPages;
     st.stampSize = layout.stampSize || 24;
     st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
@@ -2529,7 +2549,8 @@ async function exitToHome() {
   }
   st.pdfDoc = null; st.pdfBuffer = null; st.pdfName = ''; st.pdfPath = null;
   st.stamps = []; st.keptPages = []; st.pageIdx = 0; st.selectedIds.clear();
-  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dividers = []; st.zoneNames = []; st.pagePositions = {}; st.dirty = false;
+  st.currentLayout = null; st.customStamps = []; st.flippedPages = []; st.dividers = []; st.zoneNames = []; st.pagePositions = {};
+  st.specStamps = null; st.activeSpec = null; st.dirty = false;
   st.scale = 1; st.zoomPct = 100; st.mode = 'select'; st.snaps = []; st.dragState = null;
   if (_prerenderAbort) _prerenderAbort.cancelled = true;
   _pageCache = {};
@@ -2632,7 +2653,48 @@ function updateSaveBtns() {
   const saveAsBtn = document.getElementById('saveAsBtn');
   if (saveBtn) saveBtn.disabled = !st.currentLayout;
   if (saveAsBtn) saveAsBtn.disabled = !st.pdfDoc;
+  updateSpecUI();
 }
+
+function updateSpecUI() {
+  const hasPdf = !!st.pdfDoc;
+  const hasSpec = !!st.specStamps;
+  const grp = document.getElementById('specGroup');
+  const sep = document.getElementById('specSep');
+  if (grp) {
+    grp.style.display = hasPdf ? 'flex' : 'none';
+    document.querySelectorAll('.spec-btn').forEach(btn => {
+      btn.classList.toggle('active', hasSpec && st.activeSpec === btn.dataset.spec);
+    });
+  }
+  if (sep) sep.style.display = hasPdf ? '' : 'none';
+}
+
+function switchSpec(newSpec) {
+  if (!st.pdfDoc) return;
+  if (!st.specStamps) {
+    // First activation — current stamps become Spec A
+    st.specStamps = { A: JSON.parse(JSON.stringify(st.stamps)), B: [], C: [] };
+    st.activeSpec = 'A';
+  }
+  if (st.activeSpec === newSpec) return;
+  // Commit current stamps back to the active spec before switching
+  st.specStamps[st.activeSpec] = JSON.parse(JSON.stringify(st.stamps));
+  st.activeSpec = newSpec;
+  st.stamps = JSON.parse(JSON.stringify(st.specStamps[newSpec]));
+  st.selectedIds.clear();
+  st.dirty = true;
+  initHistory();
+  updateSpecUI();
+  renderStamps();
+  renderFixtureList();
+  renderLegend();
+}
+
+['A','B','C'].forEach(function(spec) {
+  const btn = document.getElementById('specBtn' + spec);
+  if (btn) btn.addEventListener('click', function() { switchSpec(spec); });
+});
 document.addEventListener('click', () => { document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open')); });
 
 // Drag and drop PDF
@@ -2688,6 +2750,13 @@ canvasWrap.addEventListener('drop', async e => {
   });
 })();
 </script>
+<!-- ── SPEC BUTTONS ──────────────────────────────────────────────────── -->
+<style>
+.spec-btn { min-width:26px; font-weight:700; letter-spacing:0.03em; }
+.spec-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+.spec-btn.active:hover { background:var(--blue-hover); border-color:var(--blue-hover); }
+</style>
+
 <!-- ── HELP OVERLAY ───────────────────────────────────────────────────── -->
 <style>
 #helpOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;}
