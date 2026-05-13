@@ -1246,6 +1246,10 @@ async function openLayout(name) {
     st.stamps = (st.specStamps && st.activeSpec)
       ? JSON.parse(JSON.stringify(st.specStamps[st.activeSpec] || []))
       : migrate(layout.stamps);
+    if (!st.specStamps) {
+      st.specStamps = { A: JSON.parse(JSON.stringify(st.stamps)), B: [], C: [] };
+      st.activeSpec = 'A';
+    }
     st.keptPages = layout.keptPages || st.keptPages;
     st.stampSize = layout.stampSize || 24;
     st.customStamps = layout.customStamps ? JSON.parse(JSON.stringify(layout.customStamps)) : [];
@@ -1264,6 +1268,7 @@ async function openLayout(name) {
     renderCustomList();
     renderLayoutList();
     renderLegend();
+    updateSpecUI();
   }
 
   // If same PDF is already loaded, just apply stamps
