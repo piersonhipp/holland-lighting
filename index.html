@@ -2667,7 +2667,7 @@ function showConfirm(title, body, okLabel, danger = true) {
   });
 }
 
-document.getElementById('saveBtn').onclick = () => { if (st.currentLayout) saveLayout(st.currentLayout); };
+document.getElementById('saveBtn').onclick = () => { if (st.currentLayout) saveLayout(st.currentLayout, st.layouts[st.currentLayout]?.type || 'plan'); };
 document.getElementById('saveAsBtn').onclick = () => openSaveAsModal();
 
 function openSaveAsModal() {
