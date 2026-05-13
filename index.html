@@ -557,7 +557,10 @@
       </div>
       </div>
       <div id="layoutMgr">
-        <div class="section-label">Saved Layouts</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">
+          <div class="section-label" style="margin:0">Saved Layouts</div>
+          <button class="layout-menu-btn" id="openJobsBtn" style="font-size:11px;padding:3px 9px;border-radius:4px;background:var(--navy-dark);border:1px solid var(--border-light);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all 0.12s" title="Open a job layout">Jobs</button>
+        </div>
         <input id="layoutSearch" placeholder="Search layouts…" oninput="renderLayoutList()">
         <div id="layoutList"></div>
         <div style="display:flex;gap:6px;margin-top:4px">
@@ -664,11 +667,27 @@
 <div id="saveAsModal">
   <div class="confirm-box">
     <div class="confirm-title">Save Layout As</div>
-    <input class="dlg-input" id="saveAsInput" placeholder="Layout name…" maxlength="80" style="margin:12px 0 4px;width:100%">
+    <div style="display:flex;gap:6px;margin:10px 0 10px">
+      <button class="save-type-btn active" data-type="plan" id="saveAsTypePlan">Plan</button>
+      <button class="save-type-btn" data-type="job" id="saveAsTypeJob">Job</button>
+    </div>
+    <input class="dlg-input" id="saveAsInput" placeholder="Layout name…" maxlength="80" style="margin:0 0 4px;width:100%">
     <div id="saveAsError" style="font-size:12px;color:var(--danger);min-height:18px;margin-bottom:10px"></div>
     <div class="confirm-actions">
       <button class="confirm-cancel" id="saveAsCancel">Cancel</button>
       <button class="confirm-ok" id="saveAsOk">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── JOBS MODAL ─────────────────────────────────────────────────────── -->
+<div id="jobsModal">
+  <div class="confirm-box" style="width:min(400px,92vw)">
+    <div class="confirm-title">Jobs</div>
+    <input id="jobSearch" class="dlg-input" placeholder="Search jobs…" style="margin:10px 0 6px;width:100%">
+    <div id="jobList" style="max-height:300px;overflow-y:auto;margin-bottom:10px"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" id="jobsClose">Close</button>
     </div>
   </div>
 </div>
@@ -1073,7 +1092,7 @@ async function loadLayouts() {
   (data || []).forEach(row => { st.layouts[row.name] = { ...row.data, pdf_path: row.pdf_path }; });
 }
 
-async function saveLayout(name) {
+async function saveLayout(name, type = 'plan') {
   if (!name.trim()) return alert('Enter a layout name.');
   const overlay = document.getElementById('saveOverlay');
   overlay.classList.add('active');
@@ -1084,6 +1103,7 @@ async function saveLayout(name) {
   }
   const payload = {
     stamps: JSON.parse(JSON.stringify(st.stamps)),
+    type,
     specStamps: st.specStamps ? JSON.parse(JSON.stringify(st.specStamps)) : null,
     activeSpec: st.activeSpec,
     pdfName: st.pdfName,
@@ -1372,10 +1392,11 @@ function renderLayoutList() {
   const el = document.getElementById('layoutList');
   if (!el) return;
   const query = (document.getElementById('layoutSearch')?.value || '').toLowerCase().trim();
-  const names = Object.keys(st.layouts)
-    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
-    .filter(n => !query || n.toLowerCase().includes(query));
-  if (!Object.keys(st.layouts).length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; updateSaveBtns(); return; }
+  const allPlans = Object.keys(st.layouts)
+    .filter(n => (st.layouts[n].type || 'plan') === 'plan')
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const names = allPlans.filter(n => !query || n.toLowerCase().includes(query));
+  if (!allPlans.length) { el.innerHTML = '<div class="status-msg">No saved layouts</div>'; updateSaveBtns(); return; }
   if (!names.length) { el.innerHTML = '<div class="status-msg">No matches</div>'; updateSaveBtns(); return; }
   el.innerHTML = '';
   names.forEach(name => {
@@ -1405,6 +1426,59 @@ function renderLayoutList() {
   });
   updateSaveBtns();
 }
+
+function renderJobsList() {
+  const el = document.getElementById('jobList');
+  if (!el) return;
+  const query = (document.getElementById('jobSearch')?.value || '').toLowerCase().trim();
+  const allJobs = Object.keys(st.layouts)
+    .filter(n => st.layouts[n].type === 'job')
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const names = allJobs.filter(n => !query || n.toLowerCase().includes(query));
+  if (!allJobs.length) { el.innerHTML = '<div class="status-msg">No saved jobs</div>'; return; }
+  if (!names.length) { el.innerHTML = '<div class="status-msg">No matches</div>'; return; }
+  el.innerHTML = '';
+  names.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'layout-item' + (st.currentLayout === name ? ' active' : '');
+    item.dataset.layoutName = name;
+    item.innerHTML = `
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
+      <button class="layout-menu-btn" title="Options">⋯</button>
+      <div class="layout-dropdown">
+        <div class="layout-dd-item">Rename</div>
+        <div class="layout-dd-item">Duplicate</div>
+        <div class="layout-dd-item danger">Delete</div>
+      </div>`;
+    item.onclick = () => { closeJobsModal(); openLayout(name); };
+    item.querySelector('.layout-menu-btn').onclick = e => {
+      e.stopPropagation();
+      const dd = item.querySelector('.layout-dropdown');
+      const isOpen = dd.classList.contains('open');
+      document.querySelectorAll('.layout-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen) dd.classList.add('open');
+    };
+    item.querySelectorAll('.layout-dd-item')[0].onclick = e => { e.stopPropagation(); renameLayout(name); renderJobsList(); };
+    item.querySelectorAll('.layout-dd-item')[1].onclick = e => { e.stopPropagation(); duplicateLayout(name); renderJobsList(); };
+    item.querySelectorAll('.layout-dd-item')[2].onclick = e => { e.stopPropagation(); deleteLayout(name).then(() => renderJobsList()); };
+    el.appendChild(item);
+  });
+}
+
+function closeJobsModal() {
+  document.getElementById('jobsModal').classList.remove('open');
+}
+
+document.getElementById('openJobsBtn').addEventListener('click', () => {
+  document.getElementById('jobsModal').classList.add('open');
+  renderJobsList();
+  setTimeout(() => document.getElementById('jobSearch').focus(), 50);
+});
+document.getElementById('jobsClose').addEventListener('click', closeJobsModal);
+document.getElementById('jobsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeJobsModal();
+});
+document.getElementById('jobSearch').addEventListener('input', renderJobsList);
 
 // ══════════════════════════════════════════════════════════════════════════
 // MODE
@@ -2599,6 +2673,19 @@ function openSaveAsModal() {
   const okBtn = document.getElementById('saveAsOk');
   const cancelBtn = document.getElementById('saveAsCancel');
 
+  let saveAsType = 'plan';
+  document.querySelectorAll('.save-type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === 'plan');
+    btn.onclick = () => {
+      saveAsType = btn.dataset.type;
+      document.querySelectorAll('.save-type-btn').forEach(b => b.classList.toggle('active', b === btn));
+      errEl.textContent = '';
+      okBtn.textContent = 'Save';
+      okBtn.style.background = '';
+      delete okBtn.dataset.confirming;
+    };
+  });
+
   input.value = st.currentLayout || st.pdfName || '';
   errEl.textContent = '';
   okBtn.textContent = 'Save';
@@ -2628,7 +2715,7 @@ function openSaveAsModal() {
 
     delete okBtn.dataset.confirming;
     close();
-    await saveLayout(trimmed);
+    await saveLayout(trimmed, saveAsType);
   }
 
   function onKey(e) {
@@ -2752,6 +2839,16 @@ canvasWrap.addEventListener('drop', async e => {
   });
 })();
 </script>
+<!-- ── TYPE TOGGLE & JOBS MODAL ──────────────────────────────────────── -->
+<style>
+.save-type-btn { flex:1; padding:6px; font-size:12px; font-weight:600; border-radius:6px; border:1px solid var(--border); background:var(--navy-dark); color:var(--text-muted); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.12s; }
+.save-type-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+.save-type-btn:hover:not(.active) { background:rgba(255,255,255,0.08); color:var(--text); border-color:rgba(255,255,255,0.3); }
+#jobsModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); backdrop-filter:blur(2px); align-items:center; justify-content:center; }
+#jobsModal.open { display:flex; }
+#jobList .layout-item { font-size:13px; }
+</style>
+
 <!-- ── SPEC BUTTONS ──────────────────────────────────────────────────── -->
 <style>
 .spec-btn { min-width:26px; font-weight:700; letter-spacing:0.03em; }
