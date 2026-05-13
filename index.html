@@ -1418,6 +1418,7 @@ async function handleFileUpload(file) {
   st.pdfBuffer = buf.slice(0);
   st.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
   document.getElementById('exitBtn').style.display = '';
+  updateSaveBtns();
 }
 
 function bindFileInput() {
